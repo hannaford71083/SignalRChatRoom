@@ -58,6 +58,25 @@
     
     <script type="text/javascript">
         
+        // ---------------------------  ROUGH NOTES ------------------------------------------------
+        /*
+        click start will go to c# signalstartGame(), get connectionIDs of all users in group, send to function startGame()
+        startgame() - i)    put up splash screen (Welcome to Pro:Direct Running comp , instructions on how to play, click button when ready)
+                      ii)   Waiting for other players to respond
+                      iii)  when ready show screen
+                      iv)   3-2-1-go and start game sequence
+        
+        game sequence - ???? 
+        
+        
+        */
+
+
+
+
+
+
+
 
 
         // ---------------------------  CLIENT OBJECTS ------------------------------------------------
@@ -237,7 +256,7 @@
             chatHub.client.updateGroupInfo = function (groupInfoArrayIn) {
 
                 var groupInfoArray = JSON.parse(groupInfoArrayIn);
-                //console.log("groupInfoArray - conversion to json"); console.log(groupInfoArray);
+                console.log("groupInfoArray - conversion to json"); console.log(groupInfoArray);
 
                 for (i in groupInfoArray){ //loop groups
                     for (j in groupInfoArray[i].users) { //loop users in group
@@ -254,6 +273,8 @@
                             $("#btnAddGroup").hide();
                             var membersObj = groupInfoArray[i].users;
                             $(".loginUser .members").data("membersObject", membersObj);
+                            $(".loginUser .start").data("group-id", groupInfoArray[i].id );
+
 
                         }
                         else {
@@ -263,7 +284,7 @@
                             }
                             
                             if (user.id == userId) {
-                                console.log("selected");
+                                //console.log("selected");
                                 $("#" + adminId).find(".join").hide();
                                 $("#" + adminId).find(".joined").show();
                             }
@@ -290,6 +311,13 @@
                 var height = $('#' + ctrId).find('#divMessage')[0].scrollHeight;
                 $('#' + ctrId).find('#divMessage').scrollTop(height);
             }
+
+
+            chatHub.client.startGame = function () {
+                console.log("starting!");
+            }
+
+
 
 
         }
@@ -320,7 +348,11 @@
                 $(code).find(".members").on("click", function () {
                     updateAdminGroupDetails();
                 });
-                
+
+                $(code).find(".start").on("click", function () {
+                    var groupID = $(this).data("group-id");
+                    chatHub.server.signalStartGame(groupID);
+                });
             }
             else {
                 code = $('<a id="' + id + '" class="user" >' + name + "<span class='join'>&nbsp;join&nbsp;</span><span class='joined'>&nbsp;joined&nbsp;</span><a></div>");
@@ -336,6 +368,8 @@
                     //add the user to group addUserToGroup(user, adminID);
                     chatHub.server.addUserToGroup(user.id, adminID);
                 });
+                
+
 
             }
 

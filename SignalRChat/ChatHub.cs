@@ -70,6 +70,7 @@ namespace SignalRChat
         }
 
 
+
         public void AddGroup(string userId )
         {
 
@@ -113,6 +114,25 @@ namespace SignalRChat
             this.UpdateClientGroups();
         }
 
+
+
+
+
+        public void SignalStartGame( string groupID)
+        {
+            var a = groupID;
+
+            Group adminGroup = GroupList.FirstOrDefault(o => o.id == groupID);
+
+            foreach (UserDetail user in adminGroup.users) {
+                Groups.Add(user.ConnectionId, groupID);
+                
+            }
+
+
+            Clients.Group(groupID).startGame();
+
+        }
 
 
 
