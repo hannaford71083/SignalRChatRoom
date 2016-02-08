@@ -87,9 +87,6 @@ namespace SignalRChat
                 Console.Write(e.Message); 
             }
 
-            // send a broacast message to all user saying person with userID is in annon group
-            //Clients.All.newGroupCreated(userId, groupId);
-
             this.UpdateClientGroups();
 
         }
@@ -129,14 +126,11 @@ namespace SignalRChat
                 var id = Context.ConnectionId;
                 Clients.All.onUserDisconnected(id, item.UserName);
 
-                //remove this user from any groups
-                // TODO : if user is admin remove id and disband group
                 foreach(Group group in GroupList){
                     if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null ) {
                         group.removeUserwithId(id);
                     }
                 }
-                
 
                 this.UpdateClientGroups();
 

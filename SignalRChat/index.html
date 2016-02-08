@@ -60,16 +60,6 @@
         
 
 
-
-        // ---------------------------  PLAN ------------------------------------------------
-        /*
-        1) Refactor User object
-        2) 
-
-        */
-
-
-
         // ---------------------------  CLIENT OBJECTS ------------------------------------------------
 
 
@@ -117,7 +107,6 @@
 
         $(function () {
 
-
             setScreen(false);
 
             // Declare a proxy to reference the hub. 
@@ -152,7 +141,6 @@
         function registerEvents(chatHub) {
 
             $("#btnStartChat").click(function () {
-
                 var name = $("#txtNickName").val();
                 if (name.length > 0) {
                     chatHub.server.connect(name);
@@ -160,12 +148,9 @@
                 else {
                     alert("Please enter name");
                 }
-
             });
 
-
             $('#btnSendMsg').click(function () {
-
                 var msg = $("#txtMessage").val();
                 if (msg.length > 0) {
                     var userName = $('#hdUserName').val();
@@ -174,23 +159,9 @@
                 }
             });
 
-
-
             $('#btnAddGroup').click(function () {
-
-                //var msg = $("#txtMessage").val();
-                //if (msg.length > 0) {
-                    //var userName = $('#hdUserName').val();
-                    //chatHub.server.sendMessageToAll(userName, msg);
-                    //$("#txtMessage").val('');
-                    
-                //}
-
                 chatHub.server.addGroup(   $("#hdId").val()  );
-
             });
-
-
 
             $("#txtNickName").keypress(function (e) {
                 if (e.which == 13) {
@@ -213,14 +184,8 @@
             chatHub.client.onConnected = function (id, userName, allUsers, messages) {
 
                 // ----- INITIALISE -----
-                //var program = new Program();
-
-                //***** START HERE NEED TO SAVE INFO IN CLIENT OBJECTS RATHER THAN #hdId HIDDEN FIELD
-                // GENERAL REFACTORING REQUIRED TO GET APPLICATION SHOWING PEOPLE IN GROUPS
-                // ...NEED TO UPDATE SERVER GROUP OBJECT WITH NEW FIELDS
-
-                user = new User();
-
+              
+                user = new User(); //SAVE INFO IN CLIENT OBJECTS RATHER THAN #hdId HIDDEN FIELD ???
                 user.id = id;
                 user.name = userName;
 
@@ -266,27 +231,7 @@
             }
 
 
-            //METHOD USED FOR TESTING ONLY
-            //chatHub.client.newGroupCreated = function (userId, groupId) {
-            //    //newGroupCreated(userId, groupId)
-            //    //AddMessage(userName, message);
-            //    console.log("Current user.id : " + user.id + ", Group userId  : " + userId);
-                
-            //    if (userId == user.id) {
-            //        //console.log("the group was started by you - now add Start button & see members");
-            //        $(".loginUser .start").show();
-            //        $(".loginUser .members").show();
-            //        //$(".users .join").show();
 
-            //    }
-            //    else {
-            //        //find user id and show join group button
-            //        //NB: this needs to be done on init
-            //        $("#" + userId).find(".join").show();   //.css("background-color", "red");
-            //    }
-
-            //}
-        
 
             //will update client information related to whom is in which group
             chatHub.client.updateGroupInfo = function (groupInfoArrayIn) {
@@ -322,20 +267,15 @@
                                 $("#" + adminId).find(".join").hide();
                                 $("#" + adminId).find(".joined").show();
                             }
-
                         }
-
-                        
 
                     }
                 }
 
                 updateAdminGroupDetails();
-
-
             }
-            
-            // if you are the admin then add all other users in a box to the right of user
+
+
             
             chatHub.client.sendPrivateMessage = function (windowId, fromUserName, message) {
                 var ctrId = 'private_' + windowId;
@@ -477,11 +417,6 @@
                 }
             });
 
-            ////$div.resizable({
-            ////    stop: function () {
-
-            ////    }
-            ////});
 
         }
 
