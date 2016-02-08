@@ -33,6 +33,18 @@
             width:100%;
         }
 
+        #divGame {
+            position: absolute;
+            top: 0;
+            height: 100vh;
+            width: 100vw;
+            text-align: center;
+            background-color: lightgreen;
+        }
+
+            #divGame .container {
+                transform: translateY(50%);
+            }
 
 
     </style>
@@ -144,16 +156,21 @@
 
         function setScreen(isLogin) {
 
-            if (!isLogin) {
+            $("#divChat").hide();
+            $("#divLogin").hide();
+            $("#header").hide();
+            $("#divGame").show();
 
-                $("#divChat").hide();
-                $("#divLogin").show();
-            }
-            else {
+            //if (!isLogin) {
 
-                $("#divChat").show();
-                $("#divLogin").hide();
-            }
+            //    $("#divChat").hide();
+            //    $("#divLogin").show();
+            //}
+            //else {
+
+            //    $("#divChat").show();
+            //    $("#divLogin").hide();
+            //}
 
         }
 
@@ -315,8 +332,20 @@
 
             chatHub.client.startGame = function () {
                 console.log("starting!");
+                /*
+                 i)   Put up splash screen (Welcome to Pro:Direct Running comp , instructions on how to play, click button when ready)
+                ii)   Waiting for other players to respond
+                iii)  when ready show screen
+                iv)   3-2-1-go and start game sequence
+                */
+
             }
 
+
+
+            //.chatRoom
+            //.login
+            //.gameSplash
 
 
 
@@ -496,7 +525,24 @@
 
         <input id="hdId" type="hidden" />
         <input id="hdUserName" type="hidden" />
+
+
+        <div id="divGame" class="gameSplash">
+            <div class="container">
+                <h1>Welcome to Low-Res Running Game</h1><br>
+                <h2>Bought to you by Pro:Direct</h2><br>
+                <br><br><br>
+                <p><strong>Instructions: </strong> Just press 'g' then 'h' keys as fast as you can!</p>
+                <br><br>
+                <button>Click to Start!</button>
+                <br><br>
+                <p>Coded by David Hannaford</p>
+            </div>
+        </div>
+
+
     </div>
+
 
 </body>
 </html>
