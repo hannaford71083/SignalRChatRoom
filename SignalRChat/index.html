@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 
     <style>
-        .join, .start, .members {
+        .joined, .join, .start, .members {
             float:right;
             display: none;
             font-size: 10px;
@@ -316,7 +316,16 @@
                             if (j == 0) {
                                 $("#" + userId).find(".join").show();
                             }
+                            
+                            if (user.id == userId) {
+                                console.log("selected");
+                                $("#" + adminId).find(".join").hide();
+                                $("#" + adminId).find(".joined").show();
+                            }
+
                         }
+
+                        
 
                     }
                 }
@@ -328,9 +337,6 @@
             
             // if you are the admin then add all other users in a box to the right of user
             
-
-
-
             chatHub.client.sendPrivateMessage = function (windowId, fromUserName, message) {
                 var ctrId = 'private_' + windowId;
 
@@ -377,7 +383,7 @@
                 
             }
             else {
-                code = $('<a id="' + id + '" class="user" >' + name + "<span class='join'>&nbsp;join&nbsp;</span><a></div>");
+                code = $('<a id="' + id + '" class="user" >' + name + "<span class='join'>&nbsp;join&nbsp;</span><span class='joined'>&nbsp;joined&nbsp;</span><a></div>");
                 console.log("userId ; " + userId);
                 $(code).dblclick(function () {
                     var id = $(this).attr('id');
