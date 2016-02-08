@@ -34,6 +34,8 @@ namespace SignalRChat
                 // send to all except caller client
                 Clients.AllExcept(id).onNewUserConnected(id, userName);
 
+                this.UpdateClientGroups();
+
             }
 
         }

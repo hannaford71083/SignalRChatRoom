@@ -20,6 +20,7 @@
 
         ul.memberContainer {
             list-style: none;
+            /*display:none;*/
             position: absolute;
             left: 215px;
             top: -20px;
@@ -29,6 +30,7 @@
 
         ul.memberContainer li{
             padding: 5px 20px;
+            width:100%;
         }
 
 
@@ -308,11 +310,14 @@
                             var membersObj = groupInfoArray[i].users;
                             $(".loginUser .members").data("membersObject", membersObj);
 
-
                         }
                         else {
-                            $("#" + userId).find(".join").show();
+                            //only show if there the user is the admin of the group i.e. index = 0
+                            if (j == 0) {
+                                $("#" + userId).find(".join").show();
+                            }
                         }
+
                     }
                 }
 
