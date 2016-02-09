@@ -601,7 +601,7 @@
             }
 
             var canary = []; //CANvas ARraY
-
+            var staticCanary = []; //static CANvas ARraY
 
             
             window.cursorY;  
@@ -624,16 +624,36 @@
             crowd3 = new canvasObj(600, 0, 300, 200, 'Images/tiled-crowd.png');
             crowd4 = new canvasObj(900, 0, 300, 200, 'Images/tiled-crowd.png');
 
-            canary.push(crowd1);
-            canary.push(crowd2);
-            canary.push(crowd3);
-            canary.push(crowd4);
+            board1 = new canvasObj(50, 180, 300, 40, 'Images/pds-board.png');
+            board2 = new canvasObj(350, 180, 300, 40, 'Images/pds-board.png');
+            board3 = new canvasObj(650, 180, 300, 40, 'Images/pds-board.png');
+            board4 = new canvasObj(950, 180, 300, 40, 'Images/pds-board.png');
 
+            line1 = new canvasObj(100, 220, 950, 5, 'Images/line.png');
+            line2 = new canvasObj(100, 350, 950, 5, 'Images/line.png');
+            line3 = new canvasObj(100, 480, 950, 5, 'Images/line.png');
+            line4 = new canvasObj(100, 610, 950, 5, 'Images/line.png');
+            line5 = new canvasObj(100, 740, 950, 5, 'Images/line.png');
+
+            staticCanary.push(crowd1);
+            staticCanary.push(crowd2);
+            staticCanary.push(crowd3);
+            staticCanary.push(crowd4);
+            staticCanary.push(board1);
+            staticCanary.push(board2);
+            staticCanary.push(board3);
+            staticCanary.push(board4);
+
+            staticCanary.push(line1);
+            staticCanary.push(line2);
+            staticCanary.push(line3);
+            staticCanary.push(line4);
+            staticCanary.push(line5);
 
             //moving objects 
-            runner1 = new canvasObj(50, 200, 125, 125, 'Images/pixel-runner.png');
-            runner2 = new canvasObj(50, 350, 125, 125, 'Images/pixel-runner.png');
-            runner3 = new canvasObj(50, 500, 125, 125, 'Images/pixel-runner.png');
+            runner1 = new canvasObj(50, 260, 125, 125, 'Images/pixel-runner.png');
+            runner2 = new canvasObj(50, 390, 125, 125, 'Images/pixel-runner.png');
+            runner3 = new canvasObj(50, 520, 125, 125, 'Images/pixel-runner.png');
             runner4 = new canvasObj(50, 650, 125, 125, 'Images/pixel-runner.png');
 	
             canary.push(runner1);
@@ -655,10 +675,14 @@
 	
             function drawImgs(){
                 //iterate array and draw each image
+                for (i in staticCanary) {
+                    drawObj(staticCanary[i]);
+                }
+
                 for(i in canary){
                     drawObj(canary[i]);
                 }
-		
+
             }
 	
             function drawObj(canObj){
