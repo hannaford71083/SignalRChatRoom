@@ -8,6 +8,22 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 
     <style>
+
+
+
+        @font-face { 
+            font-family: 'LCD'; 
+            src:  
+               /*url('/css/fonts/DINLightAlternate.svg#Din') format('svg'),  Legacy iOS*/ 
+               /*url('/css/fonts/DINLightAlternate.eot?#iefix') format('embedded-opentype'),  IE6-IE8 */
+               /*url('/css/fonts/DINLightAlternate.woff2') format('woff2'),  Super Modern Browsers */
+               /*url('/css/fonts/DINLightAlternate.woff') format('woff'),  Pretty Modern Browsers */
+               url('/css/Fonts/LCD_Solid.ttf')  format('truetype'); /*PTS55F.ttf Safari, Android, iOS */
+               /*url('/css/fonts/FF_DIN_Pro_Light_Italic.otf') format('opentype');*/ 
+            font-weight: normal; 
+            font-style: normal;
+        }
+
         .joined, .join, .start, .members {
             float:right;
             display: none;
@@ -34,17 +50,24 @@
         }
 
         #divSplash, #divGame {
+            font-family: LCD;
             position: absolute;
             top: 0;
             height: 100vh;
             width: 100vw;
             text-align: center;
-            background-color: lightgreen;
+            background-color: #00B400;
         }
 
             #divSplash .container {
                 transform: translateY(50%);
             }
+
+
+        .readyButton {
+            font-family: LCD;
+            background-color: #FFF;
+        }
 
         .red {
             color: red;
@@ -162,7 +185,7 @@
 
         function setScreen(screen) {  //screen handler
             console.log(screen);
-            //screen = "splash";
+            screen = "game";
 
             $("#divChat").hide();
             $("#divLogin").hide();
@@ -188,6 +211,9 @@
                     break;
                 case "game":
                     console.log("start game process");
+
+                    canvasGame();
+
                     $("#divGame").show();
                     break;
 
@@ -394,23 +420,9 @@
 
 
             chatHub.client.showGameScreen = function () {
-
-                console.log("Let the games begin!");
-
                 setScreen("game");
-
-                /*
-                i)   Put up splash screen (Welcome to Pro:Direct Running comp , instructions on how to play, click button when ready)
-                ii)   Waiting for other players to respond
-                iii)  when ready show screen
-                iv)   3-2-1-go and start game sequence
-                */
-
+                canvasGame();
             }
-
-
-
-
 
 
         }
@@ -543,6 +555,167 @@
 
         }
 
+
+
+
+
+        //not in global scope, watch the scope of variables
+        function canvasGame() {
+
+            console.log("Let the games begin!");
+
+            /*
+               Ingredients:
+               images for each runner (just 1 to start)
+
+               i)  3-2-1-go and start game sequence
+               ii)  
+
+               Other Modifications:
+               Need to limit player limit to e.g. 5
+               Players that join site late can see latest groups to join
+               */
+
+
+
+            var canvas = document.getElementById('myCanvas');
+            var c = canvas.getContext('2d');
+            var imageObj = new Image();
+
+
+            /*
+            Create object with position , dimensions
+            add to array 
+            */
+
+            function canvasObj(X, Y, Width, Height, path) {
+                //position
+                this.x = X;
+                this.y = Y;
+                //dimensions
+                this.imgWidth = Width;
+                this.imgHeight = Height;
+                //image object
+                this.imageObj = new Image();
+                this.imageObj.src = path;
+            }
+
+            var canary = []; //CANvas ARraY
+
+
+            
+            window.cursorY;  
+            window.degrees = 0;
+	  
+            window.x = 300;
+            window.y = 300;
+	
+            window.imgWidth = 300;
+            window.imgHeight = 150;  
+	  
+            imageObj.src =   'my-little-pony.PNG'  //'http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg'
+	
+	
+            // init objects
+
+            //static objects
+            crowd1 = new canvasObj(0, 0, 300, 200, 'Images/tiled-crowd.png');
+            crowd2 = new canvasObj(300, 0, 300, 200, 'Images/tiled-crowd.png');
+            crowd3 = new canvasObj(600, 0, 300, 200, 'Images/tiled-crowd.png');
+            crowd4 = new canvasObj(900, 0, 300, 200, 'Images/tiled-crowd.png');
+
+            canary.push(crowd1);
+            canary.push(crowd2);
+            canary.push(crowd3);
+            canary.push(crowd4);
+
+
+            //moving objects 
+            runner1 = new canvasObj(50, 200, 125, 125, 'Images/pixel-runner.png');
+            runner2 = new canvasObj(50, 350, 125, 125, 'Images/pixel-runner.png');
+            runner3 = new canvasObj(50, 500, 125, 125, 'Images/pixel-runner.png');
+            runner4 = new canvasObj(50, 650, 125, 125, 'Images/pixel-runner.png');
+	
+            canary.push(runner1);
+            canary.push(runner2);
+            canary.push(runner3);
+            canary.push(runner4);
+	
+            draw();
+	
+            function draw(){
+                c.fillStyle = '#00B400'; //fill entire grid with white
+                c.fillRect(0, 0, canvas.width, canvas.height);
+                //drawImg();
+                drawImgs();
+		
+                setTimeout(draw, 0.1);
+            }
+		
+	
+            function drawImgs(){
+                //iterate array and draw each image
+                for(i in canary){
+                    drawObj(canary[i]);
+                }
+		
+            }
+	
+            function drawObj(canObj){
+                var centerX = canObj.x - (canObj.imageObj.width / 2);
+                var centerY = canObj.y -  (canObj.imageObj.height / 2);
+                c.drawImage(canObj.imageObj, centerX, centerY, canObj.imgWidth, canObj.imgHeight );
+            }
+
+
+	
+            function drawImg(){
+                var centerX = window.x - (imageObj.width / 2);
+                var centerY = window.y -  (imageObj.height / 2);
+                c.drawImage(imageObj, centerX, centerY, window.imgWidth, window.imgHeight );
+            }
+	  
+	  
+            document.body.addEventListener('keydown', function (e) {
+                console.log(e.keyCode);
+                    if(e.keyCode == 37){ //left
+                        console.log("left");
+                        window.x -= 5;
+                        for(i in canary){
+                            canary[i].x -= 5;
+                        }
+                    }
+                    else if(e.keyCode == 38){ //up
+                        console.log("up");
+                        window.y -= 5;
+                        for(i in canary){
+                            canary[i].y -= 5;
+                        }
+                    }
+                    else if(e.keyCode == 39){ //right
+                        console.log("right");
+                        window.x += 5;
+                        for(i in canary){
+                            canary[i].x += 5;
+                        }
+                    }
+                    else if(e.keyCode == 40){// down
+                        console.log("down");
+                        window.y += 5;
+                        for(i in canary){
+                            canary[i].y += 5;
+                        }
+                    }
+            });
+
+
+
+
+        }// ---- END CanvasGame() ----
+
+
+
+
     </script>
     
 </head>
@@ -606,9 +779,9 @@
             <div class="container">
                 <h1>Main Screen!</h1>
                 
-                <!--
-                <canvas></canvas>
-                -->
+                <canvas id="myCanvas" width="1024" height="800" style="border:1px solid #d3d3d3;">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
 
             </div>
         </div>
