@@ -130,11 +130,35 @@ namespace SignalRChat
             }
 
 
-            Clients.Group(groupID).startGame();
+            Clients.Group(groupID).showSplash();
 
         }
 
+        public void PlayerReady(string playerId, string groupID)
+        {
 
+            //var a = playerId;
+            //chatHub.server.playerReady(playerId, groupID);
+            //looks through all players in group, if all ready then go to next screen
+
+            //find player in group
+            GroupList.FirstOrDefault(o => o.id == groupID)
+                .users.FirstOrDefault(o => o.ConnectionId == playerId).Status = PlayerStatus.Ready;
+
+            //check that all players in group are set to status ready
+
+            bool isReady = true;
+
+            foreach (UserDetail user in GroupList.FirstOrDefault(o => o.id == groupID).users ) {
+                if (user.Status != PlayerStatus.Ready) { isReady = false; }
+            } 
+
+            //if isReady send message to users in group.
+            if (isReady) {  Clients.Group(groupID).showGameScreen();    }
+            
+        }
+         
+        
 
 
         public override System.Threading.Tasks.Task OnDisconnected()

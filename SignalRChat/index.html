@@ -33,7 +33,7 @@
             width:100%;
         }
 
-        #divGame {
+        #divSplash, #divGame {
             position: absolute;
             top: 0;
             height: 100vh;
@@ -42,11 +42,15 @@
             background-color: lightgreen;
         }
 
-            #divGame .container {
+            #divSplash .container {
                 transform: translateY(50%);
             }
 
+        .red {
+            color: red;
+        }
 
+       
     </style>
     
     <!--Script references. -->
@@ -138,7 +142,7 @@
 
         $(function () {
 
-            setScreen(false);
+            setScreen("login");
 
             // Declare a proxy to reference the hub. 
             var chatHub = $.connection.chatHub;
@@ -154,25 +158,62 @@
 
         });
 
-        function setScreen(isLogin) {
+
+
+        function setScreen(screen) {  //screen handler
+            console.log(screen);
+            //screen = "splash";
 
             $("#divChat").hide();
             $("#divLogin").hide();
             $("#header").hide();
-            $("#divGame").show();
+            $("#divSplash").hide();
+            $("#divGame").hide();
 
-            //if (!isLogin) {
+            switch (screen) {
+                case "login":
+                    console.log("start login process");
+                    $("#header").show();
+                    $("#divLogin").show();
+                    break;
+                case "chat":
+                    console.log("start chat process");
+                    $("#header").show();
+                    $("#divChat").show();
+                    break;
+                case "splash":
+                    console.log("start splash process");
+                    keyFlashing();
+                    $("#divSplash").show();
+                    break;
+                case "game":
+                    console.log("start game process");
+                    $("#divGame").show();
+                    break;
 
-            //    $("#divChat").hide();
-            //    $("#divLogin").show();
-            //}
-            //else {
-
-            //    $("#divChat").show();
-            //    $("#divLogin").hide();
-            //}
+            }
 
         }
+
+        function keyFlashing() {
+
+            keyFlash = setInterval(function () {
+                console.log("red")
+                $(".instructions .g").toggleClass("red");
+                $(".instructions .h").toggleClass("red");
+
+            }, 500);
+
+            setTimeout(function () {
+                $(".instructions .g").removeClass("red");
+                $(".instructions .h").removeClass("red");
+                clearTimeout(keyFlash);
+            }, 15000);
+
+        }
+
+        
+
 
         function registerEvents(chatHub) {
 
@@ -225,7 +266,9 @@
                 user.id = id;
                 user.name = userName;
 
-                setScreen(true);
+                group = new Group();
+
+                setScreen("chat");
 
                 $('#hdId').val(id);
                 $('#hdUserName').val(userName);
@@ -267,13 +310,11 @@
             }
 
 
-
-
             //will update client information related to whom is in which group
             chatHub.client.updateGroupInfo = function (groupInfoArrayIn) {
 
                 var groupInfoArray = JSON.parse(groupInfoArrayIn);
-                console.log("groupInfoArray - conversion to json"); console.log(groupInfoArray);
+                //console.log("groupInfoArray - conversion to json"); console.log(groupInfoArray);
 
                 for (i in groupInfoArray){ //loop groups
                     for (j in groupInfoArray[i].users) { //loop users in group
@@ -292,6 +333,7 @@
                             $(".loginUser .members").data("membersObject", membersObj);
                             $(".loginUser .start").data("group-id", groupInfoArray[i].id );
 
+                            group.id = groupInfoArray[i].id;
 
                         }
                         else {
@@ -301,7 +343,7 @@
                             }
                             
                             if (user.id == userId) {
-                                //console.log("selected");
+                                group.id = groupInfoArray[i].id;
                                 $("#" + adminId).find(".join").hide();
                                 $("#" + adminId).find(".joined").show();
                             }
@@ -310,7 +352,10 @@
                     }
                 }
 
+               
                 updateAdminGroupDetails();
+
+
             }
 
 
@@ -330,10 +375,32 @@
             }
 
 
-            chatHub.client.startGame = function () {
-                console.log("starting!");
+            chatHub.client.showSplash = function () {
+
+                $(".readyButton").show();
+                $(".waiting").hide();
+
+                setScreen("splash");
+                
+                $(".readyButton").on("click", function ()
+                {
+                    //looks through all players in group, if all ready then go to next screen
+                    chatHub.server.playerReady(user.id, group.id );
+                    $(".readyButton").hide();
+                    $(".waiting").show();
+                });
+
+            }
+
+
+            chatHub.client.showGameScreen = function () {
+
+                console.log("Let the games begin!");
+
+                setScreen("game");
+
                 /*
-                 i)   Put up splash screen (Welcome to Pro:Direct Running comp , instructions on how to play, click button when ready)
+                i)   Put up splash screen (Welcome to Pro:Direct Running comp , instructions on how to play, click button when ready)
                 ii)   Waiting for other players to respond
                 iii)  when ready show screen
                 iv)   3-2-1-go and start game sequence
@@ -343,9 +410,6 @@
 
 
 
-            //.chatRoom
-            //.login
-            //.gameSplash
 
 
 
@@ -398,8 +462,6 @@
                     chatHub.server.addUserToGroup(user.id, adminID);
                 });
                 
-
-
             }
 
             $("#divusers").append(code);
@@ -473,13 +535,11 @@
             $('#divContainer').prepend($div);
 
             $div.draggable({
-
                 handle: ".header",
                 stop: function () {
 
                 }
             });
-
 
         }
 
@@ -527,16 +587,29 @@
         <input id="hdUserName" type="hidden" />
 
 
-        <div id="divGame" class="gameSplash">
+        <div id="divSplash" >
             <div class="container">
-                <h1>Welcome to Low-Res Running Game</h1><br>
+                <h1><!--Welcome to Low-Res Running Game-->Splash Screen</h1><br>
                 <h2>Bought to you by Pro:Direct</h2><br>
                 <br><br><br>
-                <p><strong>Instructions: </strong> Just press 'g' then 'h' keys as fast as you can!</p>
+                <p class="instructions"><strong>Instructions: </strong> Just press <span class="g red">'g'</span> then <span class="h">'h'</span> keys as fast as you can!</p>
                 <br><br>
-                <button>Click to Start!</button>
+                <button class="readyButton">Click When Ready!</button>
+                <p class="waiting">Waiting for other players...</p>
                 <br><br>
-                <p>Coded by David Hannaford</p>
+                <p><!--Coded by David Hannaford--></p>
+            </div>
+        </div>
+
+
+        <div id="divGame" >
+            <div class="container">
+                <h1>Main Screen!</h1>
+                
+                <!--
+                <canvas></canvas>
+                -->
+
             </div>
         </div>
 
