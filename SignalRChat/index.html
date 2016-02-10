@@ -97,27 +97,7 @@
     
     <script type="text/javascript">
         
-        // ---------------------------  ROUGH NOTES ------------------------------------------------
-        /*
-        click start will go to c# signalstartGame(), get connectionIDs of all users in group, send to function startGame()
-        startgame() - i)    put up splash screen (Welcome to Pro:Direct Running comp , instructions on how to play, click button when ready)
-                      ii)   Waiting for other players to respond
-                      iii)  when ready show screen
-                      iv)   3-2-1-go and start game sequence
-        
-        game sequence - ???? 
-        
-        
-        */
-
-
-
-
-
-
-
-
-
+       
         // ---------------------------  CLIENT OBJECTS ------------------------------------------------
 
 
@@ -618,6 +598,7 @@
 
             var canvas = document.getElementById('myCanvas');
             var c = canvas.getContext('2d');
+            c.font = "30px Arial";
             //var imageObj = new Image();
 
 
@@ -672,6 +653,8 @@
             line3 = new canvasObj(100, 480, 950, 5, 'Images/line.png');
             line4 = new canvasObj(100, 610, 950, 5, 'Images/line.png');
             line5 = new canvasObj(100, 740, 950, 5, 'Images/line.png');
+            line6 = new canvasObj(200, 220, 10, 525, 'Images/line.png');
+            line7 = new canvasObj(1000, 220, 10, 525, 'Images/line.png');
 
             staticCanary.push(crowd1);
             staticCanary.push(crowd2);
@@ -687,7 +670,8 @@
             staticCanary.push(line3);
             staticCanary.push(line4);
             staticCanary.push(line5);
-
+            staticCanary.push(line6);
+            staticCanary.push(line7);
             //moving objects 
 
             
@@ -711,13 +695,15 @@
                 this.increment = function () {
                     if (this.raceComplete) {  return; }
                     this.distancePresses++;
+
+                    
                     var addDistance =  game.trackDistancePixels / (game.totalPresses / this.distancePresses);
-                    console.log("addDistance : " + addDistance);
+                    //console.log("addDistance : " + addDistance);
                     newDistance = this.canvasObject.x + addDistance;
-                    console.log("new distance = " + newDistance + " , old distance = " + this.canvasObject.x);
+                    //console.log("new distance = " + newDistance + " , old distance = " + this.canvasObject.x);
                     this.canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
                     if (this.distancePresses > game.totalPresses) {
-                        console.log("*************** race complete *************** ");
+                        //console.log("*************** race complete *************** ");
                         this.raceComplete = true;
 
                         game.finishPosition.push(this.name);
@@ -734,47 +720,20 @@
 
                     }
                 }
+
             }
 
 
             game = new GameObject(); //singleton - dont make anoter!
-            
-
-
-            //Need some sort of array of game objects
-                //
-
-
-            var yCoord = [260, 390, 520, 650];
-
-
-            //runner2 = new canvasObj(50, 390, 125, 125, 'Images/pixel-runner.png');
-            //runner3 = new canvasObj(50, 520, 125, 125, 'Images/pixel-runner.png');
-            //runner4 = new canvasObj(50, 650, 125, 125, 'Images/pixel-runner.png');
+            var yCoords = [260, 390, 520, 650];
 
 
             for (i in testobject.users) {
-                //console.log("name : " + testobject.users[i].name);
-                //var runner1 = new canvasObj(50, 260, 125, 125, 'Images/pixel-runner.png');
-                //canary.push(runner1);
                 var player = new Player(testobject.users[i].name, testobject.users[i].id );
-                player.canvasObject = new canvasObj( game.startPixelX , yCoord[i], 125, 125, 'Images/pixel-runner.png');
+                player.canvasObject = new canvasObj( game.startPixelX , yCoords[i], 125, 125, 'Images/pixel-runner.png');
                 game.players.push(player);
             }
 
-            console.log(" ------ game ------ ");
-            console.log(game);
-
-
-            //runner1 = new canvasObj(50, 260, 125, 125, 'Images/pixel-runner.png');
-            //runner2 = new canvasObj(50, 390, 125, 125, 'Images/pixel-runner.png');
-            //runner3 = new canvasObj(50, 520, 125, 125, 'Images/pixel-runner.png');
-            //runner4 = new canvasObj(50, 650, 125, 125, 'Images/pixel-runner.png');
-	
-            //canary.push(runner1);
-            //canary.push(runner2);
-            //canary.push(runner3);
-            //canary.push(runner4);
 	
             draw();
 	        
@@ -782,11 +741,16 @@
             function draw(){
                 c.fillStyle = '#00B400'; //fill entire grid with white
                 c.fillRect(0, 0, canvas.width, canvas.height);
+                generatedStatic();
+
                 drawImgs();
+
                 setTimeout(draw, 0.1);
             }
 		
-	
+           
+
+
             function drawImgs(){
                 //iterate array and draw each image
                 for (i in staticCanary) {
@@ -806,28 +770,23 @@
             }
 
 
+            function generatedStatic() {
+                c.fillStyle = '#FFF';
+                c.font = "30px LCD";
+                for (i in game.players) {
+                    c.fillText(game.players[i].name, 160, ( yCoords[i] + 30 ) );
+                }
+            }
+
+
             /*
-
             we have 4 key combinations for each player (write this out below)
-
             when on key pressed then next key needs to be other in array
-            
             */
-            
-
             var player1_keys = [81, 87]; //q & w
             var player2_keys = [79, 80]; //o & p
             var player3_keys = [97, 98]; //1 & 2 - numpad
-
             var i1 = 0, i2 = 0, i3 = 0;
-
-            //keyHandler
-            /*
-                  
-            */
-
-
-
 
             function changeI(iIN) {
                 return a = iIN == 0 ? 1 : 0;
@@ -835,62 +794,26 @@
 
 
 
-
-
             document.body.addEventListener('keydown', function (e) {
-                console.log(e.keyCode);
-
+                //console.log(e.keyCode);
 
                 //player1_keys
                 if (e.keyCode == player1_keys[i1]) {
                     game.players[0].increment(); //increment distance
                     i1 = changeI(i1);
                 }
-                
+
+                //player2_keys
                 if (e.keyCode == player2_keys[i2]) {
                     game.players[1].increment(); //increment distance
                     i2 = changeI(i2);
                 }
 
+                //player3_keys
                 if (e.keyCode == player3_keys[i3]) {
                     game.players[2].increment(); //increment distance
                     i3 = changeI(i3);
                 }
-
-                //console.log("   key presses = " + game.players[0].distancePresses);
-
-
-
-                //if(e.keyCode == 37){ //left
-                //    console.log("left");
-                //    //window.x -= 5;
-                //    //for(i in canary){
-                //    //    canary[i].x -= 5;
-                //    //}
-                //}
-                //else if(e.keyCode == 38){ //up
-                //    console.log("up");
-                //    //window.y -= 5;
-                //    //for(i in canary){
-                //    //    canary[i].y -= 5;
-                //    //}
-                //}
-                //else if(e.keyCode == 39){ //right
-                //    console.log("right");
-                //    //window.x += 5;
-                //    //for(i in canary){
-                //    //    canary[i].x += 5;
-                //    //}
-                //}
-                //else if(e.keyCode == 40){// down
-                //    console.log("down");
-                //    //window.y += 5;
-                //    //for(i in canary){
-                //    //    canary[i].y += 5;
-                //    //}
-                //}
-
-
             });
 
 
