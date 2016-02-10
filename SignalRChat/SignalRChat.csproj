@@ -212,6 +212,7 @@
     <Content Include="Images\pds-board.png" />
     <Content Include="Images\pixel-runner.png" />
     <Content Include="Images\tiled-crowd.png" />
+    <Content Include="index_singleComputer.html" />
     <Content Include="index.html" />
     <Content Include="Scripts\jquery-1.8.2.js" />
     <Content Include="Scripts\jquery-1.8.2.min.js" />
