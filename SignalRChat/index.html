@@ -152,9 +152,8 @@
         //contains all the info for groups, should be synced with the server data
         function Group() {
             this.id;
-            this.name;
-            this.adminId;
-            this.members;
+            this.object;
+            
         }
 
 
@@ -360,6 +359,7 @@
                             $(".loginUser .start").data("group-id", groupInfoArray[i].id );
 
                             group.id = groupInfoArray[i].id;
+                            group.object = groupInfoArray[i];
 
                         }
                         else {
@@ -566,21 +566,59 @@
 
             /*
                Ingredients:
-               images for each runner (just 1 to start)
-
-               i)  3-2-1-go and start game sequence
-               ii)  
-
+               
+               Add start and finish line
+               Must generate each player image with name by left
+               
+               start updating process
+                count number of total key presses
+                find difference in total
+               
+               3-2-1-go and start game sequence
+               
                Other Modifications:
                Need to limit player limit to e.g. 5
                Players that join site late can see latest groups to join
-               */
+            */
+
+
+
+
+            /*
+                Protoype 1) hardcoded ammount players 
+                            single keyboard with different keys powering each players runner
+                
+            */
+
+
+            console.log("Test object to be hooked up with results from Chat Room : ");
+            //console.log(group.object);
+            // have a test object to loop through 
+
+            var testobject = {
+                id: "dsjhfdsakjhfdsalkjh",
+                users: [
+                    {
+                        ConnectionID: "asdsadsadsada",
+                        name: "Dave"
+                    },
+                    {
+                        ConnectionID: "asdsadsadsada",
+                        name: "Matt"
+                    },
+                    {
+                        ConnectionID: "asdsadsadsada",
+                        name: "Quinn"
+                    }
+                ]
+            }
+
 
 
 
             var canvas = document.getElementById('myCanvas');
             var c = canvas.getContext('2d');
-            var imageObj = new Image();
+            //var imageObj = new Image();
 
 
             /*
@@ -600,7 +638,7 @@
                 this.imageObj.src = path;
             }
 
-            var canary = []; //CANvas ARraY
+            //var canary = []; //CANvas ARraY
             var staticCanary = []; //static CANvas ARraY
 
             
@@ -613,7 +651,7 @@
             window.imgWidth = 300;
             window.imgHeight = 150;  
 	  
-            imageObj.src =   'my-little-pony.PNG'  //'http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg'
+            //imageObj.src =   'my-little-pony.PNG'  //'http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg'
 	
 	
             // init objects
@@ -651,24 +689,100 @@
             staticCanary.push(line5);
 
             //moving objects 
-            runner1 = new canvasObj(50, 260, 125, 125, 'Images/pixel-runner.png');
-            runner2 = new canvasObj(50, 390, 125, 125, 'Images/pixel-runner.png');
-            runner3 = new canvasObj(50, 520, 125, 125, 'Images/pixel-runner.png');
-            runner4 = new canvasObj(50, 650, 125, 125, 'Images/pixel-runner.png');
+
+            
+
+            function GameObject() {
+                this.totalPresses = 50;
+                this.trackDistancePixels = 800; //calculated
+                this.speedRefreshPerSec = 10;
+                this.players = [];
+                this.startPixelX = 50;
+                this.finishPosition = [];
+            }
+
+
+            function Player(inName, inId) {
+                this.name = inName;
+                this.id = inId;
+                this.canvasObject;
+                this.distancePresses = 0;
+                this.raceComplete = false;
+                this.increment = function () {
+                    if (this.raceComplete) {  return; }
+                    this.distancePresses++;
+                    var addDistance =  game.trackDistancePixels / (game.totalPresses / this.distancePresses);
+                    console.log("addDistance : " + addDistance);
+                    newDistance = this.canvasObject.x + addDistance;
+                    console.log("new distance = " + newDistance + " , old distance = " + this.canvasObject.x);
+                    this.canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
+                    if (this.distancePresses > game.totalPresses) {
+                        console.log("*************** race complete *************** ");
+                        this.raceComplete = true;
+
+                        game.finishPosition.push(this.name);
+
+                        console.log(game.finishPosition);
+                        if (game.finishPosition.length >= game.players.length) {
+                            var caption = "-------------  FINAL POSITIONS --------------\n";
+                            for (i in game.finishPosition) {
+                                var pos =  parseInt(i) + 1;
+                                caption += pos + ")   " + game.finishPosition[i] +"\n";
+                            }
+                            alert(caption);
+                        }
+
+                    }
+                }
+            }
+
+
+            game = new GameObject(); //singleton - dont make anoter!
+            
+
+
+            //Need some sort of array of game objects
+                //
+
+
+            var yCoord = [260, 390, 520, 650];
+
+
+            //runner2 = new canvasObj(50, 390, 125, 125, 'Images/pixel-runner.png');
+            //runner3 = new canvasObj(50, 520, 125, 125, 'Images/pixel-runner.png');
+            //runner4 = new canvasObj(50, 650, 125, 125, 'Images/pixel-runner.png');
+
+
+            for (i in testobject.users) {
+                //console.log("name : " + testobject.users[i].name);
+                //var runner1 = new canvasObj(50, 260, 125, 125, 'Images/pixel-runner.png');
+                //canary.push(runner1);
+                var player = new Player(testobject.users[i].name, testobject.users[i].id );
+                player.canvasObject = new canvasObj( game.startPixelX , yCoord[i], 125, 125, 'Images/pixel-runner.png');
+                game.players.push(player);
+            }
+
+            console.log(" ------ game ------ ");
+            console.log(game);
+
+
+            //runner1 = new canvasObj(50, 260, 125, 125, 'Images/pixel-runner.png');
+            //runner2 = new canvasObj(50, 390, 125, 125, 'Images/pixel-runner.png');
+            //runner3 = new canvasObj(50, 520, 125, 125, 'Images/pixel-runner.png');
+            //runner4 = new canvasObj(50, 650, 125, 125, 'Images/pixel-runner.png');
 	
-            canary.push(runner1);
-            canary.push(runner2);
-            canary.push(runner3);
-            canary.push(runner4);
+            //canary.push(runner1);
+            //canary.push(runner2);
+            //canary.push(runner3);
+            //canary.push(runner4);
 	
             draw();
-	
+	        
+            //Screen refresh every 0.1 secs OR 100ms 
             function draw(){
                 c.fillStyle = '#00B400'; //fill entire grid with white
                 c.fillRect(0, 0, canvas.width, canvas.height);
-                //drawImg();
                 drawImgs();
-		
                 setTimeout(draw, 0.1);
             }
 		
@@ -679,12 +793,12 @@
                     drawObj(staticCanary[i]);
                 }
 
-                for(i in canary){
-                    drawObj(canary[i]);
+                for(i in game.players){
+                    drawObj( game.players[i].canvasObject );
                 }
-
             }
 	
+
             function drawObj(canObj){
                 var centerX = canObj.x - (canObj.imageObj.width / 2);
                 var centerY = canObj.y -  (canObj.imageObj.height / 2);
@@ -692,44 +806,91 @@
             }
 
 
-	
-            function drawImg(){
-                var centerX = window.x - (imageObj.width / 2);
-                var centerY = window.y -  (imageObj.height / 2);
-                c.drawImage(imageObj, centerX, centerY, window.imgWidth, window.imgHeight );
+            /*
+
+            we have 4 key combinations for each player (write this out below)
+
+            when on key pressed then next key needs to be other in array
+            
+            */
+            
+
+            var player1_keys = [81, 87]; //q & w
+            var player2_keys = [79, 80]; //o & p
+            var player3_keys = [97, 98]; //1 & 2 - numpad
+
+            var i1 = 0, i2 = 0, i3 = 0;
+
+            //keyHandler
+            /*
+                  
+            */
+
+
+
+
+            function changeI(iIN) {
+                return a = iIN == 0 ? 1 : 0;
             }
-	  
-	  
+
+
+
+
+
             document.body.addEventListener('keydown', function (e) {
                 console.log(e.keyCode);
-                    if(e.keyCode == 37){ //left
-                        console.log("left");
-                        window.x -= 5;
-                        for(i in canary){
-                            canary[i].x -= 5;
-                        }
-                    }
-                    else if(e.keyCode == 38){ //up
-                        console.log("up");
-                        window.y -= 5;
-                        for(i in canary){
-                            canary[i].y -= 5;
-                        }
-                    }
-                    else if(e.keyCode == 39){ //right
-                        console.log("right");
-                        window.x += 5;
-                        for(i in canary){
-                            canary[i].x += 5;
-                        }
-                    }
-                    else if(e.keyCode == 40){// down
-                        console.log("down");
-                        window.y += 5;
-                        for(i in canary){
-                            canary[i].y += 5;
-                        }
-                    }
+
+
+                //player1_keys
+                if (e.keyCode == player1_keys[i1]) {
+                    game.players[0].increment(); //increment distance
+                    i1 = changeI(i1);
+                }
+                
+                if (e.keyCode == player2_keys[i2]) {
+                    game.players[1].increment(); //increment distance
+                    i2 = changeI(i2);
+                }
+
+                if (e.keyCode == player3_keys[i3]) {
+                    game.players[2].increment(); //increment distance
+                    i3 = changeI(i3);
+                }
+
+                //console.log("   key presses = " + game.players[0].distancePresses);
+
+
+
+                //if(e.keyCode == 37){ //left
+                //    console.log("left");
+                //    //window.x -= 5;
+                //    //for(i in canary){
+                //    //    canary[i].x -= 5;
+                //    //}
+                //}
+                //else if(e.keyCode == 38){ //up
+                //    console.log("up");
+                //    //window.y -= 5;
+                //    //for(i in canary){
+                //    //    canary[i].y -= 5;
+                //    //}
+                //}
+                //else if(e.keyCode == 39){ //right
+                //    console.log("right");
+                //    //window.x += 5;
+                //    //for(i in canary){
+                //    //    canary[i].x += 5;
+                //    //}
+                //}
+                //else if(e.keyCode == 40){// down
+                //    console.log("down");
+                //    //window.y += 5;
+                //    //for(i in canary){
+                //    //    canary[i].y += 5;
+                //    //}
+                //}
+
+
             });
 
 

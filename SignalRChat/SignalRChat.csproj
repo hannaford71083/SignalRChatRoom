@@ -207,7 +207,9 @@
     <Content Include="Global.asax" />
     <Content Include="Images\darth-vader.jpg" />
     <Content Include="Images\delete.png" />
+    <Content Include="Images\line.png" />
     <Content Include="Images\my-little-pony.PNG" />
+    <Content Include="Images\pds-board.png" />
     <Content Include="Images\pixel-runner.png" />
     <Content Include="Images\tiled-crowd.png" />
     <Content Include="index.html" />
