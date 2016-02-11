@@ -157,8 +157,20 @@ namespace SignalRChat
             if (isReady) {  Clients.Group(groupID).showGameScreen();    }
             
         }
-         
-        
+
+        public void UploadData(string groupId, string playerId, string presses )
+        {
+            //deserialise
+            int keyPresses;
+            int.TryParse(presses, out keyPresses);
+
+            //add data for player
+            //have we got all uploads
+            var a = groupId;
+
+
+        }
+
 
 
         public override System.Threading.Tasks.Task OnDisconnected()

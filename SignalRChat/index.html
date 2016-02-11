@@ -86,8 +86,7 @@
     <script src="/Scripts/ui/jquery.ui.mouse.js"></script>
     <script src="/Scripts/ui/jquery.ui.draggable.js"></script>
     <script src="/Scripts/ui/jquery.ui.resizable.js"></script>
-
-
+   
 
     <!--Reference the SignalR library. -->
     <script src="/Scripts/jquery.signalR-1.0.0.js"></script>
@@ -146,16 +145,14 @@
 
             setScreen("login");
 
-            // Declare a proxy to reference the hub. 
-            var chatHub = $.connection.chatHub;
+            // GLOBAL Declare a proxy to reference the hub. 
+            chatHub = $.connection.chatHub;
 
-            registerClientMethods(chatHub);
+            registerClientMethods();
 
             // Start Hub
             $.connection.hub.start().done(function () {
-
-                registerEvents(chatHub)
-
+                registerEvents()
             });
 
         });
@@ -163,8 +160,8 @@
 
 
         function setScreen(screen) {  //screen handler
-            console.log(screen);
-            screen = "game";
+            //console.log(screen);
+            //screen = "game";
 
             $("#divChat").hide();
             $("#divLogin").hide();
@@ -195,7 +192,6 @@
 
                     $("#divGame").show();
                     break;
-
             }
 
         }
@@ -203,7 +199,7 @@
         function keyFlashing() {
 
             keyFlash = setInterval(function () {
-                console.log("red")
+                //console.log("red")
                 $(".instructions .g").toggleClass("red");
                 $(".instructions .h").toggleClass("red");
 
@@ -220,7 +216,7 @@
         
 
 
-        function registerEvents(chatHub) {
+        function registerEvents() {
 
             $("#btnStartChat").click(function () {
                 var name = $("#txtNickName").val();
@@ -260,7 +256,7 @@
         }
 
 
-        function registerClientMethods(chatHub) {
+        function registerClientMethods() {
 
             // Calls when user successfully logged in
             chatHub.client.onConnected = function (id, userName, allUsers, messages) {
@@ -281,7 +277,7 @@
 
                 // Add All Users
                 for (i = 0; i < allUsers.length; i++) {
-                    AddUser(chatHub, allUsers[i].ConnectionId, allUsers[i].UserName);
+                    AddUser( allUsers[i].ConnectionId, allUsers[i].UserName);
                 }
 
                 // Add Existing Messages
@@ -294,7 +290,7 @@
 
             // On New User Connected
             chatHub.client.onNewUserConnected = function (id, name) {
-                AddUser(chatHub, id, name);
+                AddUser( id, name);
             }
 
 
@@ -307,7 +303,6 @@
                 $(disc).hide();
                 $('#divusers').prepend(disc);
                 $(disc).fadeIn(200).delay(2000).fadeOut(200);
-
             }
 
             chatHub.client.messageReceived = function (userName, message) {
@@ -319,7 +314,7 @@
             chatHub.client.updateGroupInfo = function (groupInfoArrayIn) {
 
                 var groupInfoArray = JSON.parse(groupInfoArrayIn);
-                //console.log("groupInfoArray - conversion to json"); console.log(groupInfoArray);
+                console.log("groupInfoArray - conversion to json"); console.log(groupInfoArray);
 
                 for (i in groupInfoArray){ //loop groups
                     for (j in groupInfoArray[i].users) { //loop users in group
@@ -337,10 +332,8 @@
                             var membersObj = groupInfoArray[i].users;
                             $(".loginUser .members").data("membersObject", membersObj);
                             $(".loginUser .start").data("group-id", groupInfoArray[i].id );
-
                             group.id = groupInfoArray[i].id;
                             group.object = groupInfoArray[i];
-
                         }
                         else {
                             //only show if there the user is the admin of the group i.e. index = 0
@@ -350,6 +343,7 @@
                             
                             if (user.id == userId) {
                                 group.id = groupInfoArray[i].id;
+                                group.object = groupInfoArray[i];
                                 $("#" + adminId).find(".join").hide();
                                 $("#" + adminId).find(".joined").show();
                             }
@@ -358,9 +352,7 @@
                     }
                 }
 
-               
                 updateAdminGroupDetails();
-
 
             }
 
@@ -370,7 +362,7 @@
                 var ctrId = 'private_' + windowId;
 
                 if ($('#' + ctrId).length == 0) {
-                    createPrivateChatWindow(chatHub, windowId, ctrId, fromUserName);
+                    createPrivateChatWindow( windowId, ctrId, fromUserName);
                 }
 
                 $('#' + ctrId).find('#divMessage').append('<div class="message"><span class="userName">' + fromUserName + '</span>: ' + message + '</div>');
@@ -423,7 +415,7 @@
 
 
 
-        function AddUser(chatHub, id, name) {
+        function AddUser( id, name) {
             var userId = $('#hdId').val();
             var code = "";
 
@@ -441,11 +433,11 @@
             }
             else {
                 code = $('<a id="' + id + '" class="user" >' + name + "<span class='join'>&nbsp;join&nbsp;</span><span class='joined'>&nbsp;joined&nbsp;</span><a></div>");
-                console.log("userId ; " + userId);
+                //console.log("userId ; " + userId);
                 $(code).dblclick(function () {
                     var id = $(this).attr('id');
                     if (userId != id)
-                        OpenPrivateChatWindow(chatHub, id, name);
+                        OpenPrivateChatWindow( id, name);
                 });
                 $(code).find(".join").on("click", function () {
                     //Not Group ID but is the admin for that group, can get group using C# Group.getAdminId() 
@@ -466,15 +458,15 @@
             $('#divChatWindow').scrollTop(height);
         }
 
-        function OpenPrivateChatWindow(chatHub, id, userName) {
+        function OpenPrivateChatWindow( id, userName) {
             var ctrId = 'private_' + id;
             if ($('#' + ctrId).length > 0) return;
-            createPrivateChatWindow(chatHub, id, ctrId, userName);
+            createPrivateChatWindow( id, ctrId, userName);
         }
 
 
 
-        function createPrivateChatWindow(chatHub, userId, ctrId, userName) {
+        function createPrivateChatWindow( userId, ctrId, userName) {
 
             var div = '<div id="' + ctrId + '" class="ui-widget-content draggable" rel="0">' +
                        '<div class="header">' +
@@ -523,6 +515,7 @@
 
         }
 
+
         function AddDivToContainer($div) {
             $('#divContainer').prepend($div);
 
@@ -542,7 +535,7 @@
         //not in global scope, watch the scope of variables
         function canvasGame() {
 
-            console.log("Let the games begin!");
+            //console.log("Let the games begin!");
 
             /*
                Ingredients:
@@ -567,10 +560,10 @@
                             single keyboard with different keys powering each players runner    
             */
 
-
-            console.log("Test object to be hooked up with results from Chat Room : ");
+            //console.log("Test object to be hooked up with results from Chat Room : ");
             //console.log(group.object);
             // have a test object to loop through 
+
 
             var testobject = {
                 id: "dsjhfdsakjhfdsalkjh",
@@ -595,9 +588,8 @@
 
             var canvas = document.getElementById('myCanvas');
             var c = canvas.getContext('2d');
-            c.font = "30px Arial";
+            
             //var imageObj = new Image();
-
 
             /*
             Create object with position , dimensions
@@ -670,7 +662,7 @@
             staticCanary.push(line6);
             staticCanary.push(line7);
             //moving objects 
-
+            
             
 
             function GameObject() {
@@ -693,7 +685,6 @@
                     if (this.raceComplete) {  return; }
                     this.distancePresses++;
 
-                    
                     var addDistance =  game.trackDistancePixels / (game.totalPresses / this.distancePresses);
                     //console.log("addDistance : " + addDistance);
                     newDistance = this.canvasObject.x + addDistance;
@@ -705,7 +696,7 @@
 
                         game.finishPosition.push(this.name);
 
-                        console.log(game.finishPosition);
+                        //console.log(game.finishPosition);
                         if (game.finishPosition.length >= game.players.length) {
                             var caption = "-------------  FINAL POSITIONS --------------\n";
                             for (i in game.finishPosition) {
@@ -720,13 +711,22 @@
 
             }
 
+           
+
 
             game = new GameObject(); //singleton - dont make anoter!
             var yCoords = [260, 390, 520, 650];
 
+            //console.log("***** ----- group.object ----- ****");
+            console.log(group.object);
 
-            for (i in testobject.users) {
-                var player = new Player(testobject.users[i].name, testobject.users[i].id );
+            for (i in group.object.users) { //testobject.users
+
+                console.log("group.object.users[i]");
+                console.log(group.object.users[i])
+                console.log("name : " + group.object.users[i].UserName + ",   id : " + group.object.users[i].ConnectionId);
+
+                var player = new Player(group.object.users[i].UserName, group.object.users[i].ConnectionId);
                 player.canvasObject = new canvasObj( game.startPixelX , yCoords[i], 125, 125, 'Images/pixel-runner.png');
                 game.players.push(player);
             }
@@ -735,17 +735,48 @@
             draw();
 	        
             //Screen refresh every 0.1 secs OR 100ms 
-            function draw(){
+            function draw() {
+                //c.clearRect(); //TODO: clear this
                 c.fillStyle = '#00B400'; //fill entire grid with white
                 c.fillRect(0, 0, canvas.width, canvas.height);
                 generatedStatic();
-
                 drawImgs();
-
-                setTimeout(draw, 0.1);
+                
+                setTimeout(draw, 50);
             }
 		
-           
+
+
+
+            
+            function uploadData() {   //string groupId, string playerId, string presses
+
+                console.log("^-- upload --^ ");
+                //send all info up 
+
+                console.log(" ----- game ----- \n");
+                console.log(game);
+
+                console.log(" ----- user ----- \n");
+                console.log(user);
+
+                console.log(" ----- group ----- \n");
+                console.log(group);
+                
+                //get the i in game.players, need to find and cache beforehand 
+                //game.players.
+
+               
+
+                chatHub.server.uploadData(group.id, user.id, 10);
+
+                // ------- Process of updating is as follows ------- 
+                // 
+
+
+            }
+
+
 
 
             function drawImgs(){
@@ -792,7 +823,6 @@
 
 
             document.body.addEventListener('keydown', function (e) {
-                //console.log(e.keyCode);
 
                 //player1_keys
                 if (e.keyCode == player1_keys[i1]) {
@@ -814,7 +844,7 @@
             });
 
 
-
+            setInterval(uploadData, 500);
 
         }// ---- END CanvasGame() ----
 
