@@ -29,6 +29,23 @@ namespace SignalRChat.Common
         }
 
 
+        //loops group and see if SentLatest true for all
+        public bool isDownloadReady()
+        {
+            bool check = true;
+            foreach(UserDetail user in this.users)
+                if (!user.SentLatest) { check = false;  }
+            return check;
+        }
+
+        //reset sents
+        public void resetSents()
+        {
+
+            foreach (UserDetail user in this.users)
+                user.SentLatest = false;
+        }
+
         
     }
 }

@@ -132,7 +132,8 @@
         function Group() {
             this.id;
             this.object;
-            
+            this.cachedIndex;
+            this.currentPage = "login";
         }
 
 
@@ -171,16 +172,19 @@
 
             switch (screen) {
                 case "login":
+                    
                     console.log("start login process");
                     $("#header").show();
                     $("#divLogin").show();
                     break;
                 case "chat":
                     console.log("start chat process");
+                    group.currentPage = "chat";
                     $("#header").show();
                     $("#divChat").show();
                     break;
                 case "splash":
+                    group.currentPage = "splash";
                     console.log("start splash process");
                     keyFlashing();
                     $("#divSplash").show();
@@ -188,6 +192,7 @@
                 case "game":
                     console.log("start game process");
 
+                    group.currentPage = "game";
                     canvasGame();
 
                     $("#divGame").show();
@@ -331,7 +336,10 @@
                             $("#btnAddGroup").hide();
                             var membersObj = groupInfoArray[i].users;
                             $(".loginUser .members").data("membersObject", membersObj);
-                            $(".loginUser .start").data("group-id", groupInfoArray[i].id );
+                            $(".loginUser .start").data("group-id", groupInfoArray[i].id);
+
+                            console.log("Group adimn --> group.cachedIndex = 0 -----------------------------------------------------------------------");
+                            group.cachedIndex = 0;
                             group.id = groupInfoArray[i].id;
                             group.object = groupInfoArray[i];
                         }
@@ -342,6 +350,10 @@
                             }
                             
                             if (user.id == userId) {
+
+                                console.log("group.cachedIndex = " + j + " -----------------------------------------------------------------------");
+                                var jj = j;
+                                group.cachedIndex = jj;
                                 group.id = groupInfoArray[i].id;
                                 group.object = groupInfoArray[i];
                                 $("#" + adminId).find(".join").hide();
@@ -357,7 +369,7 @@
             }
 
 
-            
+
             chatHub.client.sendPrivateMessage = function (windowId, fromUserName, message) {
                 var ctrId = 'private_' + windowId;
 
@@ -395,6 +407,51 @@
                 setScreen("game");
                 canvasGame();
             }
+
+
+
+            chatHub.client.updateGame = function (outputIn) {
+                //console.log(" update game - output");
+                var output = JSON.parse(outputIn);
+                console.log(output);
+
+                //update all the objects that are not my own
+                console.log("-----+++++++++ game ++++++++---------- ");
+                //console.log(game);
+
+
+                //console.log(game.players[0]);
+
+                
+
+                for(i in game.players) {
+                    //console.log("      i : " + i + ", game.players :  " + game.players[i] + " ,   game.cachedIndex :  " + group.cachedIndex);
+                    console.log("   ----- LOOP ---------- ");
+                    if (i != game.cachedIndex) {
+
+                        //console.log("output.users);");
+                        //console.log(output.users);
+                        //console.log("output.users[" + i + "]);");
+                        //console.log(output.users[i]);
+
+                        var pressesFromServers = output.users[i].KeyPresses;
+                        
+                        console.log("       pressesFromServers : "+ pressesFromServers);
+                        console.log("       game.players[i].distancePresses : " + game.players[i].distancePresses);
+                        game.players[i].distancePresses = pressesFromServers;
+                        
+                    }
+
+                    console.log(game.players);
+
+                }
+
+
+
+
+            }
+
+
 
 
         }
@@ -565,23 +622,23 @@
             // have a test object to loop through 
 
 
-            var testobject = {
-                id: "dsjhfdsakjhfdsalkjh",
-                users: [
-                    {
-                        ConnectionID: "asdsadsadsada",
-                        name: "Dave"
-                    },
-                    {
-                        ConnectionID: "asdsadsadsada",
-                        name: "Matt"
-                    },
-                    {
-                        ConnectionID: "asdsadsadsada",
-                        name: "Quinn"
-                    }
-                ]
-            }
+            //var testobject = {
+            //    id: "dsjhfdsakjhfdsalkjh",
+            //    users: [
+            //        {
+            //            ConnectionID: "asdsadsadsada",
+            //            name: "Dave"
+            //        },
+            //        {
+            //            ConnectionID: "asdsadsadsada",
+            //            name: "Matt"
+            //        },
+            //        {
+            //            ConnectionID: "asdsadsadsada",
+            //            name: "Quinn"
+            //        }
+            //    ]
+            //}
 
 
 
@@ -611,7 +668,6 @@
             //var canary = []; //CANvas ARraY
             var staticCanary = []; //static CANvas ARraY
 
-            
             window.cursorY;  
             window.degrees = 0;
 	  
@@ -709,6 +765,7 @@
                     }
                 }
 
+
             }
 
            
@@ -718,13 +775,13 @@
             var yCoords = [260, 390, 520, 650];
 
             //console.log("***** ----- group.object ----- ****");
-            console.log(group.object);
+            //console.log(group.object);
 
             for (i in group.object.users) { //testobject.users
 
-                console.log("group.object.users[i]");
-                console.log(group.object.users[i])
-                console.log("name : " + group.object.users[i].UserName + ",   id : " + group.object.users[i].ConnectionId);
+                //console.log("group.object.users[i]");
+                //console.log(group.object.users[i])
+                //console.log("name : " + group.object.users[i].UserName + ",   id : " + group.object.users[i].ConnectionId);
 
                 var player = new Player(group.object.users[i].UserName, group.object.users[i].ConnectionId);
                 player.canvasObject = new canvasObj( game.startPixelX , yCoords[i], 125, 125, 'Images/pixel-runner.png');
@@ -750,29 +807,18 @@
 
             
             function uploadData() {   //string groupId, string playerId, string presses
-
-                console.log("^-- upload --^ ");
-                //send all info up 
-
-                console.log(" ----- game ----- \n");
-                console.log(game);
-
-                console.log(" ----- user ----- \n");
-                console.log(user);
-
-                console.log(" ----- group ----- \n");
-                console.log(group);
+                if (group.currentPage != "game") {  return; }
                 
-                //get the i in game.players, need to find and cache beforehand 
-                //game.players.
+                console.log("^---------------------- upload ----------------------^ ");
 
-               
+                //console.log("index : " + group.cachedIndex + " ----------------------");
+                //console.log(game.players[group.cachedIndex]);
+                //console.log("-- * -- * -- * -- * -- * -- * -- * -- * -- * -- * --");
 
-                chatHub.server.uploadData(group.id, user.id, 10);
+                chatHub.server.uploadData(group.id, user.id, game.players[group.cachedIndex].distancePresses );
 
                 // ------- Process of updating is as follows ------- 
                 // 
-
 
             }
 
@@ -812,39 +858,28 @@
             when on key pressed then next key needs to be other in array
             */
             var player1_keys = [81, 87]; //q & w
-            var player2_keys = [79, 80]; //o & p
-            var player3_keys = [97, 98]; //1 & 2 - numpad
-            var i1 = 0, i2 = 0, i3 = 0;
+            //var player2_keys = [79, 80]; //o & p
+            //var player3_keys = [97, 98]; //1 & 2 - numpad
+            var i1 = 0; //, i2 = 0, i3 = 0;
 
             function changeI(iIN) {
                 return a = iIN == 0 ? 1 : 0;
             }
 
 
-
             document.body.addEventListener('keydown', function (e) {
 
                 //player1_keys
                 if (e.keyCode == player1_keys[i1]) {
-                    game.players[0].increment(); //increment distance
+                    game.players[group.cachedIndex].increment(); //increment distance
                     i1 = changeI(i1);
                 }
 
-                //player2_keys
-                if (e.keyCode == player2_keys[i2]) {
-                    game.players[1].increment(); //increment distance
-                    i2 = changeI(i2);
-                }
 
-                //player3_keys
-                if (e.keyCode == player3_keys[i3]) {
-                    game.players[2].increment(); //increment distance
-                    i3 = changeI(i3);
-                }
             });
 
 
-            setInterval(uploadData, 500);
+            setInterval(uploadData, 1000);
 
         }// ---- END CanvasGame() ----
 

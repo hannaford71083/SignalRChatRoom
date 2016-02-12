@@ -168,8 +168,27 @@ namespace SignalRChat
             //have we got all uploads
             var a = groupId;
 
+            //find group, find player
+            GroupList.FirstOrDefault(o => o.id == groupId)
+                .users.FirstOrDefault(o => o.ConnectionId == playerId)
+                .updateKeyPresses(keyPresses);
+
+            if (GroupList.FirstOrDefault(o => o.id == groupId).isDownloadReady())
+            {
+
+                //update position
+                JavaScriptSerializer jss = new JavaScriptSerializer();
+                string output = jss.Serialize(GroupList.FirstOrDefault(o => o.id == groupId));
+                Clients.Group(groupId).updateGame(output);
+
+                GroupList.FirstOrDefault(o => o.id == groupId).resetSents();
+            }
+            
+
 
         }
+
+
 
 
 
