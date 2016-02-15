@@ -426,24 +426,22 @@
 
                 for(i in game.players) {
                     //console.log("      i : " + i + ", game.players :  " + game.players[i] + " ,   game.cachedIndex :  " + group.cachedIndex);
-                    console.log("   ----- LOOP ---------- ");
+                    //console.log("   ----- LOOP ---------- ");
                     if (i != game.cachedIndex) {
 
-                        //console.log("output.users);");
-                        //console.log(output.users);
-                        //console.log("output.users[" + i + "]);");
-                        //console.log(output.users[i]);
-
                         var pressesFromServers = output.users[i].KeyPresses;
-                        
-                        console.log("       pressesFromServers : "+ pressesFromServers);
-                        console.log("       game.players[i].distancePresses : " + game.players[i].distancePresses);
-                        game.players[i].distancePresses = pressesFromServers;
-                        
+                        if (game.players[i].distancePresses < pressesFromServers) {
+
+                            game.players[i].distancePresses = pressesFromServers;
+                            //*********
+                            //var addDistance = game.trackDistancePixels / (game.totalPresses / pressesFromServers);
+                            //newDistance = game.players[i].canvasObject.x + addDistance;
+                            //game.players[i].canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
+
+                        }
                     }
 
-                    console.log(game.players);
-
+                    //console.log(game.players);
                 }
 
 
@@ -740,49 +738,21 @@
                 this.increment = function () {
                     if (this.raceComplete) {  return; }
                     this.distancePresses++;
-
                     var addDistance =  game.trackDistancePixels / (game.totalPresses / this.distancePresses);
-                    //console.log("addDistance : " + addDistance);
                     newDistance = this.canvasObject.x + addDistance;
-                    //console.log("new distance = " + newDistance + " , old distance = " + this.canvasObject.x);
                     this.canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
-                    if (this.distancePresses > game.totalPresses) {
-                        //console.log("*************** race complete *************** ");
-                        this.raceComplete = true;
-
-                        game.finishPosition.push(this.name);
-
-                        //console.log(game.finishPosition);
-                        if (game.finishPosition.length >= game.players.length) {
-                            var caption = "-------------  FINAL POSITIONS --------------\n";
-                            for (i in game.finishPosition) {
-                                var pos =  parseInt(i) + 1;
-                                caption += pos + ")   " + game.finishPosition[i] +"\n";
-                            }
-                            alert(caption);
-                        }
-
-                    }
                 }
-
 
             }
 
            
+            /* UPDATE OTHER PLAYERS */
 
 
             game = new GameObject(); //singleton - dont make anoter!
             var yCoords = [260, 390, 520, 650];
 
-            //console.log("***** ----- group.object ----- ****");
-            //console.log(group.object);
-
             for (i in group.object.users) { //testobject.users
-
-                //console.log("group.object.users[i]");
-                //console.log(group.object.users[i])
-                //console.log("name : " + group.object.users[i].UserName + ",   id : " + group.object.users[i].ConnectionId);
-
                 var player = new Player(group.object.users[i].UserName, group.object.users[i].ConnectionId);
                 player.canvasObject = new canvasObj( game.startPixelX , yCoords[i], 125, 125, 'Images/pixel-runner.png');
                 game.players.push(player);
@@ -796,12 +766,43 @@
                 //c.clearRect(); //TODO: clear this
                 c.fillStyle = '#00B400'; //fill entire grid with white
                 c.fillRect(0, 0, canvas.width, canvas.height);
+                preperationTasks();
                 generatedStatic();
                 drawImgs();
                 
                 setTimeout(draw, 50);
             }
 		
+
+
+
+
+
+            function preperationTasks() {
+
+                for (i in game.players) {
+                    //update canvas with presses position
+                    var addDistance = game.trackDistancePixels / (game.totalPresses / game.players[i].distancePresses);
+                    newDistance = game.players[i].canvasObject.x + addDistance;
+                    game.players[i].canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
+
+                    //check if the race is finished
+                    if (game.players[i].distancePresses > game.totalPresses && game.players[i].raceComplete == false ) {
+                        game.players[i].raceComplete = true;
+                        game.finishPosition.push(game.players[i].name);
+                        if (game.finishPosition.length >= game.players.length) {
+                            var caption = "-------------  FINAL POSITIONS --------------\n";
+                            for (j in game.finishPosition) {
+                                var pos = parseInt(j) + 1;
+                                caption += pos + ")   " + game.finishPosition[j] + "\n";
+                            }
+                            alert(caption);
+                        }
+                    }
+
+                }
+
+            }
 
 
 
@@ -857,24 +858,27 @@
             we have 4 key combinations for each player (write this out below)
             when on key pressed then next key needs to be other in array
             */
-            var player1_keys = [81, 87]; //q & w
+
+
+
+            var player_keys = [71, 72]; // g & h
+            //var player1_keys = [81, 87]; //q & w
             //var player2_keys = [79, 80]; //o & p
             //var player3_keys = [97, 98]; //1 & 2 - numpad
-            var i1 = 0; //, i2 = 0, i3 = 0;
+            var index = 0; //, i2 = 0, i3 = 0;
 
-            function changeI(iIN) {
-                return a = iIN == 0 ? 1 : 0;
+            function changeI(index) {
+                return a = index == 0 ? 1 : 0;
             }
 
 
             document.body.addEventListener('keydown', function (e) {
 
-                //player1_keys
-                if (e.keyCode == player1_keys[i1]) {
+                //player_keys
+                if (e.keyCode == player_keys[index]) {
                     game.players[group.cachedIndex].increment(); //increment distance
-                    i1 = changeI(i1);
+                    index = changeI(index);
                 }
-
 
             });
 
