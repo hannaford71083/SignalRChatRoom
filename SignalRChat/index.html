@@ -49,7 +49,7 @@
             width:100%;
         }
 
-        #divSplash, #divGame {
+        #divSplash, #divGame, #divResults {
             font-family: LCD;
             position: absolute;
             top: 0;
@@ -59,14 +59,28 @@
             background-color: #00B400;
         }
 
-            #divSplash .container {
+            #divSplash .container, #divResults .container {
                 transform: translateY(50%);
             }
 
 
-        .readyButton {
+        .resultsContainer table {
+            margin:auto;
+        }
+
+            .resultsContainer * {
+                font-size: 24px;
+            }
+
+            .resultsContainer tr th {
+                width: 140px;
+                padding-bottom: 12px;
+            }
+
+        .button {
             font-family: LCD;
             background-color: #FFF;
+            font-size: 24px;
         }
 
         .red {
@@ -169,6 +183,7 @@
             $("#header").hide();
             $("#divSplash").hide();
             $("#divGame").hide();
+            $("#divResults").hide();
 
             switch (screen) {
                 case "login":
@@ -191,11 +206,16 @@
                     break;
                 case "game":
                     console.log("start game process");
-
                     group.currentPage = "game";
                     canvasGame();
-
                     $("#divGame").show();
+                    break;
+                case "results":
+                    console.log("start results process");
+                    $("#divResults").show();
+                    $(".backToChat").on("click tap", function () {
+                        location.reload();
+                    });
                     break;
             }
 
@@ -319,7 +339,7 @@
             chatHub.client.updateGroupInfo = function (groupInfoArrayIn) {
 
                 var groupInfoArray = JSON.parse(groupInfoArrayIn);
-                console.log("groupInfoArray - conversion to json"); console.log(groupInfoArray);
+                //console.log("groupInfoArray - conversion to json"); console.log(groupInfoArray);
 
                 for (i in groupInfoArray){ //loop groups
                     for (j in groupInfoArray[i].users) { //loop users in group
@@ -338,7 +358,7 @@
                             $(".loginUser .members").data("membersObject", membersObj);
                             $(".loginUser .start").data("group-id", groupInfoArray[i].id);
 
-                            console.log("Group adimn --> group.cachedIndex = 0 -----------------------------------------------------------------------");
+                            //console.log("Group adimn --> group.cachedIndex = 0 -----------------------------------------------------------------------");
                             group.cachedIndex = 0;
                             group.id = groupInfoArray[i].id;
                             group.object = groupInfoArray[i];
@@ -351,7 +371,7 @@
                             
                             if (user.id == userId) {
 
-                                console.log("group.cachedIndex = " + j + " -----------------------------------------------------------------------");
+                                //console.log("group.cachedIndex = " + j + " -----------------------------------------------------------------------");
                                 var jj = j;
                                 group.cachedIndex = jj;
                                 group.id = groupInfoArray[i].id;
@@ -413,10 +433,10 @@
             chatHub.client.updateGame = function (outputIn) {
                 //console.log(" update game - output");
                 var output = JSON.parse(outputIn);
-                console.log(output);
+                //console.log(output);
 
                 //update all the objects that are not my own
-                console.log("-----+++++++++ game ++++++++---------- ");
+                //console.log("-----+++++++++ game ++++++++---------- ");
                 //console.log(game);
 
 
@@ -590,66 +610,10 @@
         //not in global scope, watch the scope of variables
         function canvasGame() {
 
-            //console.log("Let the games begin!");
-
-            /*
-               Ingredients:
-               
-               Add start and finish line
-               Must generate each player image with name by left
-               
-               start updating process
-                count number of total key presses
-                find difference in total
-               
-               3-2-1-go and start game sequence
-               
-               Other Modifications:
-               Need to limit player limit to e.g. 5
-               Players that join site late can see latest groups to join
-            */
-
-
-            /*
-                Protoype 1) hardcoded ammount players 
-                            single keyboard with different keys powering each players runner    
-            */
-
-            //console.log("Test object to be hooked up with results from Chat Room : ");
-            //console.log(group.object);
-            // have a test object to loop through 
-
-
-            //var testobject = {
-            //    id: "dsjhfdsakjhfdsalkjh",
-            //    users: [
-            //        {
-            //            ConnectionID: "asdsadsadsada",
-            //            name: "Dave"
-            //        },
-            //        {
-            //            ConnectionID: "asdsadsadsada",
-            //            name: "Matt"
-            //        },
-            //        {
-            //            ConnectionID: "asdsadsadsada",
-            //            name: "Quinn"
-            //        }
-            //    ]
-            //}
-
-
-
 
             var canvas = document.getElementById('myCanvas');
             var c = canvas.getContext('2d');
             
-            //var imageObj = new Image();
-
-            /*
-            Create object with position , dimensions
-            add to array 
-            */
 
             function canvasObj(X, Y, Width, Height, path) {
                 //position
@@ -666,19 +630,6 @@
             //var canary = []; //CANvas ARraY
             var staticCanary = []; //static CANvas ARraY
 
-            window.cursorY;  
-            window.degrees = 0;
-	  
-            window.x = 300;
-            window.y = 300;
-	
-            window.imgWidth = 300;
-            window.imgHeight = 150;  
-	  
-            //imageObj.src =   'my-little-pony.PNG'  //'http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg'
-	
-	
-            // init objects
 
             //static objects
             crowd1 = new canvasObj(0, 0, 300, 200, 'Images/tiled-crowd.png');
@@ -791,12 +742,19 @@
                         game.players[i].raceComplete = true;
                         game.finishPosition.push(game.players[i].name);
                         if (game.finishPosition.length >= game.players.length) {
-                            var caption = "-------------  FINAL POSITIONS --------------\n";
+
+                            var html = "<table>";
+                            html += "<tr><th>POSITION</th><th>NAME</th></tr>"; //<th>TIME</th>
                             for (j in game.finishPosition) {
                                 var pos = parseInt(j) + 1;
-                                caption += pos + ")   " + game.finishPosition[j] + "\n";
+                                html += "<tr><td>" + pos + "</td><td>" + game.finishPosition[j] + "</td></tr>";
                             }
-                            alert(caption);
+
+                            html += "</table>"
+                            $(".resultsContainer").html(html);
+                            
+                            setScreen("results");
+
                         }
                     }
 
@@ -808,19 +766,9 @@
 
             
             function uploadData() {   //string groupId, string playerId, string presses
-                if (group.currentPage != "game") {  return; }
-                
-                console.log("^---------------------- upload ----------------------^ ");
-
-                //console.log("index : " + group.cachedIndex + " ----------------------");
-                //console.log(game.players[group.cachedIndex]);
-                //console.log("-- * -- * -- * -- * -- * -- * -- * -- * -- * -- * --");
+                if (group.currentPage != "game") { return; }
 
                 chatHub.server.uploadData(group.id, user.id, game.players[group.cachedIndex].distancePresses );
-
-                // ------- Process of updating is as follows ------- 
-                // 
-
             }
 
 
@@ -854,18 +802,11 @@
             }
 
 
-            /*
-            we have 4 key combinations for each player (write this out below)
-            when on key pressed then next key needs to be other in array
-            */
-
-
+            /* we have 4 key combinations for each player (write this out below)
+            when on key pressed then next key needs to be other in array */
 
             var player_keys = [71, 72]; // g & h
-            //var player1_keys = [81, 87]; //q & w
-            //var player2_keys = [79, 80]; //o & p
-            //var player3_keys = [97, 98]; //1 & 2 - numpad
-            var index = 0; //, i2 = 0, i3 = 0;
+            var index = 0; 
 
             function changeI(index) {
                 return a = index == 0 ? 1 : 0;
@@ -883,7 +824,7 @@
             });
 
 
-            setInterval(uploadData, 1000);
+            setInterval(uploadData, 100);
 
         }// ---- END CanvasGame() ----
 
@@ -895,13 +836,14 @@
 </head>
 <body>
     <div id="header">
-        SignalR Chat Room
+        Low-Res Running Game Chat Room
     </div>
     <br />
     <br />
     <br />
 
     <div id="divContainer">
+
         <div id="divLogin" class="login">
             <div>
                 Your Name:<br />
@@ -914,7 +856,7 @@
 
         <div id="divChat" class="chatRoom">
             <div class="title">
-                Welcome to Chat Room [<span id='spanUser'></span>]
+                Welcome to the Chat Room <span id='spanUser'></span>
 
             </div>
             <div class="content">
@@ -936,22 +878,22 @@
 
         <div id="divSplash" >
             <div class="container">
-                <h1><!--Welcome to Low-Res Running Game-->Splash Screen</h1><br>
+                <h1>Welcome to Low-Res Running Game</h1><br>
                 <h2>Bought to you by Pro:Direct</h2><br>
                 <br><br><br>
                 <p class="instructions"><strong>Instructions: </strong> Just press <span class="g red">'g'</span> then <span class="h">'h'</span> keys as fast as you can!</p>
                 <br><br>
-                <button class="readyButton">Click When Ready!</button>
+                <button class="readyButton button">Click When Ready!</button>
                 <p class="waiting">Waiting for other players...</p>
                 <br><br>
-                <p><!--Coded by David Hannaford--></p>
+                <p>Coded by David Hannaford</p>
             </div>
         </div>
 
 
         <div id="divGame" >
             <div class="container">
-                <h1>Main Screen!</h1>
+                <h1>Welcome to Low-Res Running!</h1>
                 
                 <canvas id="myCanvas" width="1024" height="800" style="border:1px solid #d3d3d3;">
                     Your browser does not support the HTML5 canvas tag.
@@ -959,6 +901,23 @@
 
             </div>
         </div>
+
+
+
+        <div id="divResults">
+            <div class="container">
+                <h1>Results</h1>
+                <br><br>
+                <div class="resultsContainer"></div>
+                <br><br>
+                <button class="backToChat button">Back to Chat Room</button>
+                <br><br>
+            </div>
+        </div>
+
+
+
+
 
 
     </div>
