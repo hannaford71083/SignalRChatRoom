@@ -28,6 +28,7 @@
             float:right;
             display: none;
             font-size: 10px;
+            cursor: pointer;
         }
 
         .memberGroup {
@@ -40,7 +41,7 @@
             position: absolute;
             left: 215px;
             top: -20px;
-            border: solid green 1px;
+            border: solid #000 1px;
             padding: 0;
         }
 
@@ -57,6 +58,11 @@
             width: 100vw;
             text-align: center;
             background-color: #00B400;
+        }
+
+
+        #divSplash *, #divGame *, #divResults *, #divChat *,   #divLogin *,    #header{
+            font-family: LCD;
         }
 
             #divSplash .container, #divResults .container {
@@ -85,6 +91,25 @@
 
         .red {
             color: red;
+        }
+
+
+        .privateWindow * {
+            font-family: LCD;
+            font-size: 14px;
+        }
+
+        #divChat {
+            position: relative;
+        }
+
+        p.message {
+            position: absolute;
+            bottom: -20px;
+            margin: 0;
+            font-size: 12px;
+            padding-bottom: 5px
+
         }
 
        
@@ -189,9 +214,11 @@
                     program.currentPage = "chat";
                     $("#header").show();
                     $("#divChat").show();
+
+                    chatHub.server.updateClientGroups();
                     break;
                 case "splash":
-                    console.log("start splash process");
+                    program.currentPage = "splash";
                     keyFlashing();
                     $("#divSplash").show();
                     break;
@@ -201,7 +228,7 @@
                     $("#divGame").show();
                     break;
                 case "results":
-                    console.log("start results process");
+                    program.currentPage = "results";
                     $("#divResults").show();
                     $(".backToChat").on("click tap", function () {
                         location.reload();
@@ -441,7 +468,12 @@
         function updateAdminGroupDetails() {
             var members = $(".members").data("membersObject");
             var membersHtml = "<ul class='memberContainer'>";
+             
+
             for (i in members) {
+                if (i == 0) {
+                    membersHtml += "<li  data-id='" + members[i].ConnectionId + "'>MEMBERS:</li>"; //HACK to show members lable
+                }
                 membersHtml += "<li data-id='" + members[i].ConnectionId + "' >" + members[i].UserName + "</li>";
             }
             membersHtml += "</ul>";
@@ -455,14 +487,16 @@
             var code = "";
 
             if (userId == id) {
-                code = $('<div class="loginUser">' + name + " <a class='members'>&nbsp;members&nbsp;</a><a class='start'>&nbsp;start&nbsp;</a><span class='memberGroup'></span></div>");
+                code = $('<div class="loginUser">' + name + " <a class='members'>&nbsp;</a><a class='start'>&nbsp;start&nbsp;</a><span class='memberGroup'></span></div>"); //members&nbsp;
 
-                $(code).find(".members").on("click", function () {
+                $(code).find(".members").on("click tap", function () {
                     updateAdminGroupDetails();
                 });
 
-                $(code).find(".start").on("click", function () {
+                $(code).find(".start").on("click tap", function () {
                     var groupID = $(this).data("group-id");
+                    var a = chatHub.server.signalStartGame(groupID); //HACK : requires calling twice for some reason
+                    console.log(a);
                     chatHub.server.signalStartGame(groupID);
                 });
             }
@@ -502,7 +536,7 @@
 
         function createPrivateChatWindow( userId, ctrId, userName) {
 
-            var div = '<div id="' + ctrId + '" class="ui-widget-content draggable" rel="0">' +
+            var div = '<div id="' + ctrId + '" class="ui-widget-content draggable privateWindow" rel="0">' +
                        '<div class="header">' +
                           '<div  style="float:right;">' +
                               '<img id="imgDelete"  style="cursor:pointer;" src="/Images/delete.png"/>' +
@@ -771,13 +805,11 @@
 
 
             document.body.addEventListener('keydown', function (e) {
-
                 //player_keys
                 if (e.keyCode == player_keys[index] && !program.timerlock ) {
                     game.players[group.cachedIndex].increment(); //increment distance
                     index = changeI(index);
                 }
-
             });
 
 
@@ -814,7 +846,7 @@
 </head>
 <body>
     <div id="header">
-        Low-Res Running Game Chat Room
+        Running Simulator 2000 Chat Room
     </div>
     <br />
     <br />
@@ -848,6 +880,7 @@
                 <input id="btnSendMsg" type="button" value="Send" class="submitButton" />
                 <input id="btnAddGroup" type="button" value="+ Group" class="addGroupButton" />
             </div>
+            <p class="message">*Double click on user to start private chat window</p>
         </div>
 
         <input id="hdId" type="hidden" />
@@ -856,7 +889,7 @@
 
         <div id="divSplash" >
             <div class="container">
-                <h1>Welcome to Low-Res Running Game</h1><br>
+                <h1>Welcome to Running Simulator 2000</h1><br>
                 <h2>Bought to you by Pro:Direct</h2><br>
                 <br><br><br>
                 <p class="instructions"><strong>Instructions: </strong> Just press <span class="g red">'g'</span> then <span class="h">'h'</span> keys as fast as you can!</p>
@@ -864,14 +897,14 @@
                 <button class="readyButton button">Click When Ready!</button>
                 <p class="waiting">Waiting for other players...</p>
                 <br><br>
-                <p>Coded by David Hannaford</p>
+                <p>Developed by<br> the North Korean Technology Board<br> and David Hannaford</p>
             </div>
         </div>
 
 
         <div id="divGame" >
             <div class="container">
-                <h1>Welcome to Low-Res Running!</h1>
+                <h1>Running Simulator 2000</h1>
                 
                 <canvas id="myCanvas" width="1024" height="800" style="border:1px solid #d3d3d3;">
                     Your browser does not support the HTML5 canvas tag.

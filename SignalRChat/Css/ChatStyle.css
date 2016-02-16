@@ -7,16 +7,16 @@
 #header
 {
     padding: 20px;
-    background-color: #d7e5e4;
-    border-bottom: #5f9482 solid 2px;
-    color: #1e4638;
+    background-color: #d1d1d1;
+    border-bottom: #000 solid 2px;
+    color: #000;
     font-size: 24px;
 }
 
 .submitButton
 {
-    background-color: #d7e5e4;
-    border: #5f9482 solid 1px;
+    background-color: #d1d1d1;
+    border: #000 solid 1px;
     padding: 4px;
     cursor: pointer;
 }
@@ -32,8 +32,8 @@
     margin-left: auto;
     margin-right: auto;
     padding: 10px;
-    border: solid 2px #5f9482;
-    color: #1e4638;
+    border: solid 2px #000;
+    color: #000;
 }
 
     .login .textBox
@@ -61,8 +61,8 @@
         font-size: 16px;
         font-weight: bold;
         padding: 8px;
-        background-color: #d7e5e4;
-        border-bottom: solid 1px #5f9482;
+        background-color: #d1d1d1;
+        border-bottom: solid 1px #000;
     }
 
     .chatRoom .content
@@ -76,7 +76,7 @@
             float: left;
             width: 409px;
             height: 300px;
-            border-right: solid 1px #5f9482;
+            border-right: solid 1px #000;
             overflow-y: scroll;
         }
 
@@ -103,7 +103,7 @@
                 cursor: pointer;
                 padding: 4px;
                 background-color: #f9f9f9;
-                border-bottom: solid 1px #5f9482;
+                border-bottom: solid 1px #000;
             }
 
             .chatRoom .content .users .loginUser
@@ -111,7 +111,7 @@
                 display: block;
                 padding: 4px;
                 color: gray;
-                border-bottom: solid 1px #5f9482;
+                border-bottom: solid 1px #000;
             }
 
             .chatRoom .content .users .user:hover
@@ -143,16 +143,16 @@
 .draggable
 {
     position: absolute;
-    border: #5f9482 solid 1px !important;
+    /*border: #5f9482 solid 1px !important;*/
     width: 250px;
 }
 
     .draggable .header
     {
         cursor: move;
-        background-color: #d7e5e4;
-        border-bottom: #5f9482 solid 1px;
-        color: #1e4638;
+        background-color: #d1d1d1;
+        border-bottom: #aaa solid 1px;
+        color: #000;
     }
 
     .draggable .selText
@@ -166,7 +166,7 @@
         width: 250px;
         overflow-y: scroll;
         height: 200px;
-         border-bottom: #5f9482 solid 1px;
+        border-bottom: #aaa solid 1px;
     }
 
         .draggable .messageArea .message
@@ -190,3 +190,10 @@
            margin-left:4px;
             width: 55px;
         }
+
+
+    #btnAddGroup {
+        border: solid 1px #000;
+        background-color: #d1d1d1;
+        height: 24px;
+    }
