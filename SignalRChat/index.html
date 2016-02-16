@@ -120,14 +120,12 @@
         function Program() {
             this.groups = {};
             this.currentUser;
+            this.screenUpdateMs = 50 //screen update frequency in MS
+            this.timerTime = 200; //
+            this.stopWatch = 0;
+            this.timerlock = true;
+            this.currentPage = "login";
         }
-
-        // **** ANY METHODS HERE ****
-        Program.prototype.initialSetPage = function (pageToVisit) {
-            //
-            //this.transitionToPage(pageToVisit);
-        }
-
 
 
         // -------------- USER Class -------------- 
@@ -147,7 +145,6 @@
             this.id;
             this.object;
             this.cachedIndex;
-            this.currentPage = "login";
         }
 
 
@@ -175,8 +172,6 @@
 
 
         function setScreen(screen) {  //screen handler
-            //console.log(screen);
-            //screen = "game";
 
             $("#divChat").hide();
             $("#divLogin").hide();
@@ -187,26 +182,21 @@
 
             switch (screen) {
                 case "login":
-                    
-                    console.log("start login process");
                     $("#header").show();
                     $("#divLogin").show();
                     break;
                 case "chat":
-                    console.log("start chat process");
-                    group.currentPage = "chat";
+                    program.currentPage = "chat";
                     $("#header").show();
                     $("#divChat").show();
                     break;
                 case "splash":
-                    group.currentPage = "splash";
                     console.log("start splash process");
                     keyFlashing();
                     $("#divSplash").show();
                     break;
                 case "game":
-                    console.log("start game process");
-                    group.currentPage = "game";
+                    program.currentPage = "game";
                     canvasGame();
                     $("#divGame").show();
                     break;
@@ -224,7 +214,6 @@
         function keyFlashing() {
 
             keyFlash = setInterval(function () {
-                //console.log("red")
                 $(".instructions .g").toggleClass("red");
                 $(".instructions .h").toggleClass("red");
 
@@ -287,8 +276,8 @@
             chatHub.client.onConnected = function (id, userName, allUsers, messages) {
 
                 // ----- INITIALISE -----
-              
-                user = new User(); //SAVE INFO IN CLIENT OBJECTS RATHER THAN #hdId HIDDEN FIELD ???
+                program = new Program();
+                user = new User(); 
                 user.id = id;
                 user.name = userName;
 
@@ -315,7 +304,10 @@
 
             // On New User Connected
             chatHub.client.onNewUserConnected = function (id, name) {
-                AddUser( id, name);
+                console.log("group.currentPage : " + program.currentPage);
+                if (program.currentPage == "chat") {
+                    AddUser(id, name);
+                }
             }
 
 
@@ -357,8 +349,6 @@
                             var membersObj = groupInfoArray[i].users;
                             $(".loginUser .members").data("membersObject", membersObj);
                             $(".loginUser .start").data("group-id", groupInfoArray[i].id);
-
-                            //console.log("Group adimn --> group.cachedIndex = 0 -----------------------------------------------------------------------");
                             group.cachedIndex = 0;
                             group.id = groupInfoArray[i].id;
                             group.object = groupInfoArray[i];
@@ -370,8 +360,6 @@
                             }
                             
                             if (user.id == userId) {
-
-                                //console.log("group.cachedIndex = " + j + " -----------------------------------------------------------------------");
                                 var jj = j;
                                 group.cachedIndex = jj;
                                 group.id = groupInfoArray[i].id;
@@ -431,57 +419,29 @@
 
 
             chatHub.client.updateGame = function (outputIn) {
-                //console.log(" update game - output");
                 var output = JSON.parse(outputIn);
-                //console.log(output);
-
-                //update all the objects that are not my own
-                //console.log("-----+++++++++ game ++++++++---------- ");
-                //console.log(game);
-
-
-                //console.log(game.players[0]);
-
-                
-
+              
                 for(i in game.players) {
-                    //console.log("      i : " + i + ", game.players :  " + game.players[i] + " ,   game.cachedIndex :  " + group.cachedIndex);
-                    //console.log("   ----- LOOP ---------- ");
                     if (i != game.cachedIndex) {
-
                         var pressesFromServers = output.users[i].KeyPresses;
                         if (game.players[i].distancePresses < pressesFromServers) {
 
                             game.players[i].distancePresses = pressesFromServers;
-                            //*********
-                            //var addDistance = game.trackDistancePixels / (game.totalPresses / pressesFromServers);
-                            //newDistance = game.players[i].canvasObject.x + addDistance;
-                            //game.players[i].canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
-
                         }
                     }
-
-                    //console.log(game.players);
                 }
-
-
-
 
             }
 
 
-
-
-        }
+        } //registerClientMethods()
 
 
 
         function updateAdminGroupDetails() {
             var members = $(".members").data("membersObject");
-            //console.log(members);
             var membersHtml = "<ul class='memberContainer'>";
             for (i in members) {
-                //console.log("name : " + members[i].ConnectionId + ",   id : " + members[i].UserName);
                 membersHtml += "<li data-id='" + members[i].ConnectionId + "' >" + members[i].UserName + "</li>";
             }
             membersHtml += "</ul>";
@@ -508,7 +468,6 @@
             }
             else {
                 code = $('<a id="' + id + '" class="user" >' + name + "<span class='join'>&nbsp;join&nbsp;</span><span class='joined'>&nbsp;joined&nbsp;</span><a></div>");
-                //console.log("userId ; " + userId);
                 $(code).dblclick(function () {
                     var id = $(this).attr('id');
                     if (userId != id)
@@ -719,9 +678,10 @@
                 c.fillRect(0, 0, canvas.width, canvas.height);
                 preperationTasks();
                 generatedStatic();
+                if (program.currentPage == "game") { countdown(); }
                 drawImgs();
                 
-                setTimeout(draw, 50);
+                setTimeout(draw, program.screenUpdateMs );
             }
 		
 
@@ -740,14 +700,14 @@
                     //check if the race is finished
                     if (game.players[i].distancePresses > game.totalPresses && game.players[i].raceComplete == false ) {
                         game.players[i].raceComplete = true;
-                        game.finishPosition.push(game.players[i].name);
+                        game.finishPosition.push({name : game.players[i].name, time: (program.stopWatch / 50) });
                         if (game.finishPosition.length >= game.players.length) {
 
                             var html = "<table>";
-                            html += "<tr><th>POSITION</th><th>NAME</th></tr>"; //<th>TIME</th>
+                            html += "<tr><th>POSITION</th><th>NAME</th><th>TIME</th></tr>"; //
                             for (j in game.finishPosition) {
                                 var pos = parseInt(j) + 1;
-                                html += "<tr><td>" + pos + "</td><td>" + game.finishPosition[j] + "</td></tr>";
+                                html += "<tr><td>" + pos + "</td><td>" + game.finishPosition[j].name + "</td><td>" + game.finishPosition[j].time + "</td></tr>";
                             }
 
                             html += "</table>"
@@ -766,7 +726,7 @@
 
             
             function uploadData() {   //string groupId, string playerId, string presses
-                if (group.currentPage != "game") { return; }
+                if (program.currentPage != "game") { return; }
 
                 chatHub.server.uploadData(group.id, user.id, game.players[group.cachedIndex].distancePresses );
             }
@@ -802,9 +762,6 @@
             }
 
 
-            /* we have 4 key combinations for each player (write this out below)
-            when on key pressed then next key needs to be other in array */
-
             var player_keys = [71, 72]; // g & h
             var index = 0; 
 
@@ -816,13 +773,34 @@
             document.body.addEventListener('keydown', function (e) {
 
                 //player_keys
-                if (e.keyCode == player_keys[index]) {
+                if (e.keyCode == player_keys[index] && !program.timerlock ) {
                     game.players[group.cachedIndex].increment(); //increment distance
                     index = changeI(index);
                 }
 
             });
 
+
+            //For initial statoff countdown and stopwatch
+            function countdown() {
+                var caption;
+                if (program.timerTime <= 0) {
+                    caption = "";
+                    program.timerlock = false;
+                    c.font = "50px LCD";
+                    c.fillText((program.stopWatch / 50), 450, 790);
+                    program.stopWatch++;
+                }
+                else {
+                    caption = Math.ceil(program.timerTime / 50) + "";//to string
+                }
+
+                c.fillStyle = '#FFF';
+                c.font = "120px LCD";
+                c.fillText(caption, 500, 470);
+
+                program.timerTime--;
+            }
 
             setInterval(uploadData, 100);
 
@@ -856,7 +834,7 @@
 
         <div id="divChat" class="chatRoom">
             <div class="title">
-                Welcome to the Chat Room <span id='spanUser'></span>
+                Welcome to the Chat Room: <span id='spanUser'></span>
 
             </div>
             <div class="content">
