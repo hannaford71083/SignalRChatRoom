@@ -12,7 +12,7 @@ using Microsoft.AspNet.SignalR.Hubs;
 
 namespace SignalRChat
 {
-    [HubName("CustomHub")]
+    [HubName("chatHub")]
     public class ChatHub : Hub
     {
         #region Data Members
@@ -232,7 +232,7 @@ namespace SignalRChat
 
 
 
-        public override System.Threading.Tasks.Task OnDisconnected()
+        public override System.Threading.Tasks.Task OnDisconnected(bool stopCalled) 
         {
             var item = ConnectedUsers.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
             if (item != null)
@@ -257,7 +257,7 @@ namespace SignalRChat
                 GroupList.Clear();
             }
 
-            return base.OnDisconnected();
+            return base.OnDisconnected(stopCalled); 
         }
 
      
