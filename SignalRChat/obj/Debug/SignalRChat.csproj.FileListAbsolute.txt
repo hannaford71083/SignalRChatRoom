@@ -31,5 +31,6 @@ C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Microsoft.AspNe
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Microsoft.AspNet.SignalR.SystemWeb.xml
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Microsoft.Owin.Host.SystemWeb.xml
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Newtonsoft.Json.xml
+C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.csprojResolveAssemblyReference.cache
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.dll
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.pdb

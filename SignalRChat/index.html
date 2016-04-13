@@ -145,10 +145,11 @@
         function Program() {
             this.groups = {};
             this.currentUser;
-            this.screenUpdateMs = 50 //screen update frequency in MS
-            this.timerTime = 200; //
-            this.stopWatch = 0;
-            this.timerlock = true;
+            this.screenUpdateMs = 50;   // TODO: in game object???   // screen update frequency in MS
+            this.uploadUpdateMS = 100;  // TODO: in game object???
+            this.timerTime = 200; 
+            this.stopWatch = 0;         // TODO: in game object???
+            this.timerlock = true;      // TODO: in game object???
             this.currentPage = "login";
         }
 
@@ -447,7 +448,7 @@
 
             chatHub.client.updateGame = function (outputIn) {
                 var output = JSON.parse(outputIn);
-              
+                
                 for(i in game.players) {
                     if (i != game.cachedIndex) {
                         var pressesFromServers = output.users[i].KeyPresses;
@@ -459,6 +460,7 @@
                 }
 
             }
+
 
 
         } //registerClientMethods()
@@ -519,6 +521,7 @@
             $("#divusers").append(code);
             
         }
+
 
         function AddMessage(userName, message) {
             $('#divChatWindow').append('<div class="message"><span class="userName">' + userName + '</span>: ' + message + '</div>');
@@ -712,7 +715,14 @@
                 c.fillRect(0, 0, canvas.width, canvas.height);
                 preperationTasks();
                 generatedStatic();
-                if (program.currentPage == "game") { countdown(); }
+                if (program.currentPage == "game") {
+                    if (program.timerTime <= 0) {
+                        stopWatchUpdate();
+                    }
+                    else {
+                        countdown();
+                    }
+                }
                 drawImgs();
                 
                 setTimeout(draw, program.screenUpdateMs );
@@ -722,7 +732,7 @@
 
 
 
-
+            //refactor this? as want to keep objects separate
             function preperationTasks() {
 
                 for (i in game.players) {
@@ -813,19 +823,34 @@
             });
 
 
-            //For initial statoff countdown and stopwatch
+            //For initial startoff countdown and stopwatch
             function countdown() {
+
+                //on start - 
+                //CLIENT updateCountdown 
+                
                 var caption;
-                if (program.timerTime <= 0) {
-                    caption = "";
-                    program.timerlock = false;
-                    c.font = "50px LCD";
-                    c.fillText((program.stopWatch / 50), 450, 790);
-                    program.stopWatch++;
-                }
-                else {
-                    caption = Math.ceil(program.timerTime / 50) + "";//to string
-                }
+
+                //if (program.timerTime <= 0) {
+                //    caption = "";
+                //    program.timerlock = false;
+                //    c.font = "50px LCD";
+
+
+                //    //need to get time at start of game
+                //    //need to check 
+
+                //    c.fillText((program.stopWatch / 50), 450, 790);
+
+                //    console.log("program.stopWatch / 50 : "+ program.stopWatch );
+
+                //    program.stopWatch++;
+                //}
+                //else {
+                    
+                //}
+
+                caption = Math.ceil(program.timerTime / 50) + "";
 
                 c.fillStyle = '#FFF';
                 c.font = "120px LCD";
@@ -834,7 +859,31 @@
                 program.timerTime--;
             }
 
-            setInterval(uploadData, 100);
+
+
+
+            function stopWatchUpdate() {
+
+                var caption = "";
+                program.timerlock = false;
+                c.font = "50px LCD";
+
+                //need to get time at start of game
+                //need to check 
+
+                c.fillText((program.stopWatch / 50), 450, 790);
+
+                console.log("program.stopWatch / 50 : "+ program.stopWatch );
+
+                program.stopWatch++;
+
+                //c.fillStyle = '#FFF';
+                //c.font = "120px LCD";
+                //c.fillText(caption, 500, 470);
+
+            }
+
+            setInterval(uploadData, program.uploadUpdateMS  );
 
         }// ---- END CanvasGame() ----
 

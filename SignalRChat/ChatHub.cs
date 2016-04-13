@@ -5,16 +5,25 @@ using System.Web;
 using Microsoft.AspNet.SignalR;
 using SignalRChat.Common;
 using System.Web.Script.Serialization;
+using System.Timers;
+using Microsoft.AspNet.SignalR.Hubs;
+//using System.Threading;
+
 
 namespace SignalRChat
 {
+    [HubName("CustomHub")]
     public class ChatHub : Hub
     {
         #region Data Members
 
         static List<UserDetail> ConnectedUsers = new List<UserDetail>();
         static List<MessageDetail> CurrentMessage = new List<MessageDetail>();
-        static List<Group> GroupList = new List<Group>(); 
+        static List<Group> GroupList = new List<Group>();
+
+        //private readonly TimeSpan _countdownInterval = TimeSpan.FromMilliseconds(1000);
+        private Timer _countdownTimerLoop;
+
 
         #endregion
 
@@ -30,6 +39,7 @@ namespace SignalRChat
 
                 // send to caller
                 Clients.Caller.onConnected(id, userName, ConnectedUsers, CurrentMessage);
+                
 
                 // send to all except caller client
                 Clients.AllExcept(id).onNewUserConnected(id, userName);
@@ -146,16 +156,44 @@ namespace SignalRChat
                 .users.FirstOrDefault(o => o.ConnectionId == playerId).Status = PlayerStatus.Ready;
 
             //check that all players in group are set to status ready
-
             bool isReady = true;
+
 
             foreach (UserDetail user in GroupList.FirstOrDefault(o => o.id == groupID).users ) {
                 if (user.Status != PlayerStatus.Ready) { isReady = false; }
             } 
 
             //if isReady send message to users in group.
-            if (isReady) {  Clients.Group(groupID).showGameScreen();    }
+            if (isReady) {  
+                Clients.Group(groupID).showGameScreen();
+                this.StartCountdown();    
+            }
             
+        }
+
+        public void StartCountdown() {
+            
+            _countdownTimerLoop = new Timer(1000);
+
+            //string groupID = "121343242";
+
+            _countdownTimerLoop.Elapsed += new ElapsedEventHandler(DownloadCountdown);
+            _countdownTimerLoop.Enabled = true; // Enable it
+            
+        }
+
+
+        static void DownloadCountdown(object sender, ElapsedEventArgs e)
+        {
+            //TODO : WE either use a single thread that will fire every 10th of a second, and will e.g. implement countdown every 10 itereations!       
+                // OR Look into multithreading what do we need here
+
+           // System.Console.WriteLine(_countdownTimerLoop.ToString());
+            
+                var a = e;
+            
+            //Clients.Group(groupID).showSplash();
+        
         }
 
         public void UploadData(string groupId, string playerId, string presses )
@@ -167,6 +205,8 @@ namespace SignalRChat
             //add data for player
             //have we got all uploads
             var a = groupId;
+
+            //TODO - try/catch put here
 
             //find group, find player
             GroupList.FirstOrDefault(o => o.id == groupId)
