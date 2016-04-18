@@ -32,6 +32,5 @@ C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Microsoft.Owin.
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Microsoft.Owin.Host.SystemWeb.xml
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Microsoft.Owin.Security.xml
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Newtonsoft.Json.xml
-C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.csprojResolveAssemblyReference.cache
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.dll
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.pdb

@@ -24,8 +24,9 @@ namespace SignalRChat
         //private readonly TimeSpan _countdownInterval = TimeSpan.FromMilliseconds(1000);
         private Timer _countdownTimerLoop;
 
-
         #endregion
+
+
 
         #region Methods
 
@@ -36,19 +37,92 @@ namespace SignalRChat
             if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
             {
                 ConnectedUsers.Add(new UserDetail { ConnectionId = id, UserName = userName });
-
                 // send to caller
                 Clients.Caller.onConnected(id, userName, ConnectedUsers, CurrentMessage);
-                
-
                 // send to all except caller client
                 Clients.AllExcept(id).onNewUserConnected(id, userName);
-
                 this.UpdateClientGroups();
-
             }
 
         }
+
+
+        //Method is for testing harness
+        public void ConnectTestUser(string userName) {
+            var id = Context.ConnectionId;
+
+            if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
+            {
+                ConnectedUsers.Add(new UserDetail { ConnectionId = id, UserName = userName }); 
+                //Clients.Caller.onConnected(id, userName, ConnectedUsers, CurrentMessage); //Reduces initilise time for large numbers -  // send to caller
+                //Clients.AllExcept(id).onNewUserConnected(id, userName); //Reduces initilise time for large numbers -  // send to all except caller client
+                //this.UpdateClientGroups();
+            }
+
+        }
+
+
+        public void AssignTestUsersToGroup() {
+
+            //for load test harness user genration 
+            int userInGroupI = 0;
+            string adminforGroupId = "";
+
+            foreach (UserDetail user in ConnectedUsers.ToList())
+            {
+
+                //every 4 people setup new group
+                if (userInGroupI == 0)
+                {
+                    //create a new group
+                    adminforGroupId = user.ConnectionId;
+                    ConnectedUsers.Add(new UserDetail { ConnectionId = adminforGroupId, UserName = user.UserName });
+                    Guid groupId = Guid.NewGuid();
+                    Group newGroup = new Group();
+                    newGroup.id = groupId.ToString();
+                    UserDetail userDetail = ConnectedUsers.FirstOrDefault(o => o.ConnectionId == adminforGroupId);  //find the userDetails form userId     o => o.Items != null && 
+                    try
+                    {
+                        newGroup.addUserDetail(userDetail);
+                        GroupList.Add(newGroup);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.Write(e.Message);
+                    }
+                }
+                else
+                {
+                    //Linq statement taken from AddUserToGroup(string userId, string adminID) 
+                    GroupList.FirstOrDefault(o => o.getAdminId() == adminforGroupId).addUserDetail(
+                        ConnectedUsers.FirstOrDefault(o => o.ConnectionId == user.ConnectionId));
+                }
+
+                //loop through 0,1,2,3 then back 
+                if (userInGroupI == 3)
+                {
+                    userInGroupI = 0;
+                }
+                else
+                {
+                    userInGroupI += 1;
+                }
+
+
+
+
+
+                Clients.Client(user.ConnectionId).UploadListInfo(user.ConnectionId, GroupList.FirstOrDefault(o => o.getAdminId() == adminforGroupId).id);
+
+
+            }
+
+
+            
+
+        }
+
+
 
         public void SendMessageToAll(string userName, string message)
         {
@@ -136,9 +210,7 @@ namespace SignalRChat
 
             foreach (UserDetail user in adminGroup.users) {
                 Groups.Add(user.ConnectionId, groupID);
-                
             }
-
 
             Clients.Group(groupID).showSplash();
 
@@ -208,7 +280,7 @@ namespace SignalRChat
 
             //TODO - try/catch put here
 
-            //find group, find player
+            //find group, find player   //TODO : Make users group thread safe
             GroupList.FirstOrDefault(o => o.id == groupId)
                 .users.FirstOrDefault(o => o.ConnectionId == playerId)
                 .updateKeyPresses(keyPresses);
@@ -227,8 +299,6 @@ namespace SignalRChat
 
 
         }
-
-
 
 
 
