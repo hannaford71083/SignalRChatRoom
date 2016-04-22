@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Web;
 using Microsoft.AspNet.SignalR;
@@ -7,6 +8,7 @@ using SignalRChat.Common;
 using System.Web.Script.Serialization;
 using System.Timers;
 using Microsoft.AspNet.SignalR.Hubs;
+using System.Threading;
 //using System.Threading;
 
 
@@ -17,12 +19,26 @@ namespace SignalRChat
     {
         #region Data Members
 
-        static List<UserDetail> ConnectedUsers = new List<UserDetail>();
-        static List<MessageDetail> CurrentMessage = new List<MessageDetail>();
+        /*
+         ---- Operation Making Thread Safe ----
+         
+         *Note: maybe consider doing TODOs first. 
+         
+         1) Convert ConnectedUsers to HubBlockingCollection
+         2) Convert GroupList to HubBlockingCollection
+         3) DO all TODOs, deal with cancellationTokens correctly
+         
+         */
+
+        static BlockingCollection<UserDetail> ConnectedUsers = new BlockingCollection<UserDetail>(); //If no constructor will default to ConcurrentQueue<T>
+        
+        //static List<UserDetail> ConnectedUsers = new List<UserDetail>();
+        static HubBlockingCollection<MessageDetail> CurrentMessage = new HubBlockingCollection<MessageDetail>();
         static List<Group> GroupList = new List<Group>();
 
-        //private readonly TimeSpan _countdownInterval = TimeSpan.FromMilliseconds(1000);
-        private Timer _countdownTimerLoop;
+
+
+        private  System.Timers.Timer _countdownTimerLoop;
 
         #endregion
 
@@ -54,9 +70,7 @@ namespace SignalRChat
             if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
             {
                 ConnectedUsers.Add(new UserDetail { ConnectionId = id, UserName = userName }); 
-                //Clients.Caller.onConnected(id, userName, ConnectedUsers, CurrentMessage); //Reduces initilise time for large numbers -  // send to caller
                 //Clients.AllExcept(id).onNewUserConnected(id, userName); //Reduces initilise time for large numbers -  // send to all except caller client
-                //this.UpdateClientGroups();
             }
 
         }
@@ -109,16 +123,11 @@ namespace SignalRChat
                 }
 
 
-
-
-
                 Clients.Client(user.ConnectionId).UploadListInfo(user.ConnectionId, GroupList.FirstOrDefault(o => o.getAdminId() == adminforGroupId).id);
 
 
             }
 
-
-            
 
         }
 
@@ -216,6 +225,8 @@ namespace SignalRChat
 
         }
 
+
+
         public void PlayerReady(string playerId, string groupID)
         {
 
@@ -243,9 +254,11 @@ namespace SignalRChat
             
         }
 
+
+
         public void StartCountdown() {
             
-            _countdownTimerLoop = new Timer(1000);
+            _countdownTimerLoop = new System.Timers.Timer(1000);
 
             //string groupID = "121343242";
 
@@ -296,8 +309,6 @@ namespace SignalRChat
                 GroupList.FirstOrDefault(o => o.id == groupId).resetSents();
             }
             
-
-
         }
 
 
@@ -307,13 +318,16 @@ namespace SignalRChat
             var item = ConnectedUsers.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
             if (item != null)
             {
-                ConnectedUsers.Remove(item);
+
+                NonBlockingConsumer<UserDetail>(ConnectedUsers, new CancellationToken(), item );
+                //ConnectedUsers.Remove(item);
+
                 var id = Context.ConnectionId;
                 Clients.All.onUserDisconnected(id, item.UserName);
 
                 foreach(Group group in GroupList){
                     if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null ) {
-                        group.removeUserwithId(id);
+                        group.removeUserwithId(id); //REFACTOR LATER - NOT THREAD SAFE
                     }
                 }
 
@@ -330,6 +344,28 @@ namespace SignalRChat
             return base.OnDisconnected(stopCalled); 
         }
 
+
+        //TODO: Unhandled Error, is CancellationToken needed as parameter to be passed in (more research required), also access modifier required?
+        static void NonBlockingConsumer<T>( BlockingCollection<T> bc, CancellationToken ct, T item)
+        {
+
+            try
+            {
+                if (!bc.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
+                {
+                    Console.WriteLine(" Take Blocked");
+                }
+                else
+                    Console.WriteLine(" Take:{0}", item.ToString());
+            }
+            catch (OperationCanceledException) {
+                Console.WriteLine("Taking canceled.");
+                //break;
+            }
+
+        }
+
+
      
         #endregion
 
@@ -339,11 +375,45 @@ namespace SignalRChat
         {
             CurrentMessage.Add(new MessageDetail { UserName = userName, Message = message });
 
-            if (CurrentMessage.Count > 100)
-                CurrentMessage.RemoveAt(0);
+            //TODO : ADD limit back
+            //if (CurrentMessage.Count > 100)
+            //    CurrentMessage.RemoveAt(0);
         }
 
         #endregion
     }
 
 }
+
+
+// ---------------- ORIGINALLY IN CODE ---------------- 
+
+
+
+//// IsCompleted == (IsAddingCompleted && Count == 0)
+//while (!bc.IsCompleted)
+//{
+//    //int nextItem = 0;
+//    try
+//    {
+//        //if (!bc.TryTake(out nextItem, 0, ct))
+//        if (!bc.TryTake(out item, 0, ct))
+//        {
+//            Console.WriteLine(" Take Blocked");
+//        }
+//        else
+//            Console.WriteLine(" Take:{0}", item.ToString());
+//    }
+
+//    catch (OperationCanceledException)
+//    {
+//        Console.WriteLine("Taking canceled.");
+//        break;
+//    }
+
+//    // Slow down consumer just a little to cause
+//    // collection to fill up faster, and lead to "AddBlocked"
+//    // Thread.SpinWait(500000);
+//}
+
+//Console.WriteLine("\r\nNo more items to take.");
