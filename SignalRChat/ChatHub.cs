@@ -312,35 +312,81 @@ namespace SignalRChat
 
 
 
+
+        //delegate void removeGroup(ChatHub ch, UserDetail item, string id);
+
+
+
         public override System.Threading.Tasks.Task OnDisconnected(bool stopCalled) 
         {
             var item = ConnectedUsers.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
             if (item != null)
             {
 
-                NonBlockingConsumer<UserDetail>(ConnectedUsers, new CancellationToken(), item );
-                //ConnectedUsers.Remove(item);
+
+
+                //************ RESUME HERE *********** - how do I pass in this delegate
+                //removeGroup rg = CheckAndRemoveGroup;
+
+
+                //Func<SignalRChat.ChatHub, SignalRChat.Common.UserDetail, string, string> remGrp = (x, y, z) =>
+                //        y.ToString();
+
 
                 var id = Context.ConnectionId;
-                Clients.All.onUserDisconnected(id, item.UserName);
+                CheckAndRemoveGroup(this, item, id);
 
-                foreach(Group group in GroupList){
-                    if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null ) {
-                        group.removeUserwithId(id); //REFACTOR LATER - NOT THREAD SAFE
-                    }
-                }
+                //Action removeGroup<string, int, int > = 
 
-                this.UpdateClientGroups();
+                //switch to this.Remove(item);
+                NonBlockingConsumer<UserDetail>(ConnectedUsers, new CancellationToken(), item );
+                
+                //Have this.Remove(item, delegate) override with a delegate that contains stuff below
+                
+                
+
+                //this.Clients.All.onUserDisconnected(id, item.UserName);
+
+                //foreach(Group group in GroupList){
+                //    if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null ) {
+                //        group.removeUserwithId(id); //REFACTOR LATER - NOT THREAD SAFE
+                //    }
+                //}
+
+                //this.UpdateClientGroups();
 
             }
 
+
+            //TODO: put this into Group method
             //is it the 'end of the session', if so then flush objects
             if (ConnectedUsers.Count == 0) {
+
+                //CurrentMessage.Dispose();
                 CurrentMessage.Clear();
                 GroupList.Clear();
             }
 
             return base.OnDisconnected(stopCalled); 
+        }
+
+
+
+        //id Clients item this
+        public static void CheckAndRemoveGroup( SignalRChat.ChatHub ch, SignalRChat.Common.UserDetail item, string id ) {
+            
+            ch.Clients.All.onUserDisconnected(id, item.UserName);
+
+            foreach (Group group in GroupList)
+            {
+                if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null)
+                {
+                    group.removeUserwithId(id); //REFACTOR LATER - NOT THREAD SAFE
+                }
+            }
+
+            ch.UpdateClientGroups();
+            
         }
 
 

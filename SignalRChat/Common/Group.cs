@@ -11,12 +11,10 @@ namespace SignalRChat.Common
         public string id { get; set; }
         private string _adminId = String.Empty;
 
-        public List<UserDetail> users = new List<UserDetail>();
+        public HubBlockingCollection<UserDetail> users = new HubBlockingCollection<UserDetail>();
 
         public void addUserDetail(UserDetail userDetail ) {
-            if (users.Count == 0) { //this is the group admin
-                _adminId = userDetail.ConnectionId;
-            }
+            
             users.Add(userDetail);
         }
 
@@ -24,7 +22,7 @@ namespace SignalRChat.Common
         public string getAdminId()
         {
             if (_adminId == String.Empty) {
-                _adminId = users.First().ConnectionId;
+                _adminId = users.First().ConnectionId; // TODO: uses interlocked ??
             }
             return this._adminId;
         }
@@ -34,7 +32,6 @@ namespace SignalRChat.Common
         {
             users.Remove(users.FirstOrDefault(o => o.ConnectionId == id));
         }
-
 
 
 
