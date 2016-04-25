@@ -36,7 +36,7 @@ namespace SignalRChat
         static HubBlockingCollection<MessageDetail> CurrentMessage = new HubBlockingCollection<MessageDetail>();
         static List<Group> GroupList = new List<Group>();
 
-
+        //here is some test text
         private  System.Timers.Timer _countdownTimerLoop;
 
         #endregion
