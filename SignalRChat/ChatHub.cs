@@ -24,18 +24,17 @@ namespace SignalRChat
          
          *Note: maybe consider doing TODOs first. 
          
-         1) Convert ConnectedUsers to HubBlockingCollection
+         (DONE)     1) Convert ConnectedUsers to HubBlockingCollection
          2) Convert GroupList to HubBlockingCollection
+         2a) public UserDetail().updateKeyPresses - ensure is thread safe
          3) DO all TODOs, deal with cancellationTokens correctly
+         4) Look at Lifecycle of update/broadcast of options
          
          */
 
-        static BlockingCollection<UserDetail> ConnectedUsers = new BlockingCollection<UserDetail>(); //If no constructor will default to ConcurrentQueue<T>
-        
-        //static List<UserDetail> ConnectedUsers = new List<UserDetail>();
+        static HubBlockingCollection<UserDetail> ConnectedUsers = new HubBlockingCollection<UserDetail>(); //If no constructor will default to ConcurrentQueue<T>
         static HubBlockingCollection<MessageDetail> CurrentMessage = new HubBlockingCollection<MessageDetail>();
         static List<Group> GroupList = new List<Group>();
-
 
 
         private  System.Timers.Timer _countdownTimerLoop;
@@ -272,7 +271,7 @@ namespace SignalRChat
         {
             //TODO : WE either use a single thread that will fire every 10th of a second, and will e.g. implement countdown every 10 itereations!       
                 // OR Look into multithreading what do we need here
-
+            
            // System.Console.WriteLine(_countdownTimerLoop.ToString());
             
                 var a = e;

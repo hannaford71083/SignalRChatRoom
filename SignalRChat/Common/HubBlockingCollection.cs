@@ -11,17 +11,12 @@ namespace SignalRChat.Common
     {
 
         //Override Add Method TODO: Implement Thread Safe Add :D 
-        public void Add(T item) {
+        public void Add(T item, int periodInMs = 1000) {
             Console.WriteLine("Add derived method is used!!!");
-
-
-            CancellationToken ct = new CancellationToken(); //TODO: Need to deal with this correctly 
-
 
             try
             {
-                if (!this.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
-                {
+                if(!this.TryAdd(item)){  //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
                     Console.WriteLine(" Take Blocked");
                 }
                 else
@@ -33,10 +28,15 @@ namespace SignalRChat.Common
                 //break;
             }
 
-
-
             //base.Add(item);
         }
+
+
+
+
+
+
+
 
         //Create a method for Flushing collection availible for List but not for BlockigCollection
         public void Clear()
