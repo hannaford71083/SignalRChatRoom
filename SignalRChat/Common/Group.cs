@@ -3,15 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
+
+/*
+    -----------  ----------- NOTES -----------  ----------- 
+ * 
+ * ---- FUTURE IMPROVEMENTS ---
+ * 1) Make copy and try to make thread safe
+  
+ */
+
+
 namespace SignalRChat.Common
 {
     public class Group
     {
 
         public string id { get; set; }
-        private string _adminId = String.Empty;
+        public string adminId = String.Empty;
 
-        public HubBlockingCollection<UserDetail> users = new HubBlockingCollection<UserDetail>();
+        public List<UserDetail> users = new List<UserDetail>();
 
         public void addUserDetail(UserDetail userDetail ) {
             
@@ -21,10 +31,10 @@ namespace SignalRChat.Common
         //Posible Ammendment - add a property for admin instead of taking first item in List
         public string getAdminId()
         {
-            if (_adminId == String.Empty) {
-                _adminId = users.First().ConnectionId; // TODO: uses interlocked ??
+            if (this.adminId == String.Empty) {
+                this.adminId = users.First().ConnectionId; // TODO: uses interlocked ??
             }
-            return this._adminId;
+            return this.adminId;
         }
 
         //removes user from group with a specific ID
@@ -32,7 +42,6 @@ namespace SignalRChat.Common
         {
             users.Remove(users.FirstOrDefault(o => o.ConnectionId == id));
         }
-
 
 
         //----- Game Methods ----- (need to rethink lifecycle of updating game events) 
@@ -49,11 +58,9 @@ namespace SignalRChat.Common
         //reset sents
         public void resetSents()
         {
-
             foreach (UserDetail user in this.users)
                 user.SentLatest = false;
         }
-
         
     }
 }

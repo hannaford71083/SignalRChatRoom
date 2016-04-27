@@ -4,84 +4,84 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Web;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Diagnostics;
+
+/*
+    -----------  ----------- NOTES -----------  ----------- 
+ * 
+ * ---- FUTURE IMPROVEMENTS ---
+ * 1) Think about how to handle exceptions, throw exceptions up a level ???
+ * 2) Is there a test to see how this works :¬s
+ 
+ 
+ */
+
 
 namespace SignalRChat.Common
 {
     public class HubBlockingCollection<T> : BlockingCollection<T>
     {
 
-        //Override Add Method TODO: Implement Thread Safe Add :D 
-        public void Add(T item, int periodInMs = 1000) {
-            Console.WriteLine("Add derived method is used!!!");
-
+        public void Add(T item, int periodInMs = 1000) { //waiting time is 1 sec by default
+            Debug.WriteLine("HubBlockingCollection<"+ item.GetType() +"> - Add() ");
             try
             {
-                if(!this.TryAdd(item)){  //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
-                    Console.WriteLine(" Take Blocked");
+                if (!this.TryAdd(item))
+                {  
+                    Debug.WriteLine("HubBlockingCollection - Add() -  Add Blocked");
                 }
-                else
-                    Console.WriteLine(" Take:{0}", item.ToString());
+                else {
+                    Debug.WriteLine("HubBlockingCollection - Add() -  Add: " + item.ToString());
+                }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException e)
             {
-                Console.WriteLine("Taking canceled.");
-                //break;
+                Debug.WriteLine("HubBlockingCollection - Add() - Adding canceled message : " + e.Message);
             }
-
-            //base.Add(item);
         }
-
 
 
         public void Remove(T item, int periodInMs = 1000) {
-
-            CancellationToken ct = new CancellationToken();
-            //TODO: deal with ct, using 'if(cancelToken.IsCancellationRequested)'
-            
+            CancellationToken ct = new CancellationToken(); //TODO: deal with ct, using 'if(cancelToken.IsCancellationRequested)'
             try
             {
                 if (!this.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
                 {
-                    Console.WriteLine(" Take Blocked");
+                    Debug.WriteLine("HubBlockingCollection - Remove() - Take Blocked");
                 }
-                else { 
-                    Console.WriteLine(" Take:{0}", item.ToString());
+                else {
+                    Debug.WriteLine("HubBlockingCollection - Remove() - Take : ", item.ToString());
                 }
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("Taking canceled.");
+                Debug.WriteLine("HubBlockingCollection - Remove() -Taking canceled.");
                 //break;
             }
-        
         }
 
-
-        public void RemoveClear(T item, int periodInMs = 1000)
+        //Same as Remove with callback
+        public void RemoveAndCallback(T item, Task task  ,  int periodInMs = 1000)
         {
-
-            CancellationToken ct = new CancellationToken();
-            //TODO: deal with ct, using 'if(cancelToken.IsCancellationRequested)'
-
+            CancellationToken ct = new CancellationToken();//TODO: deal with ct, using 'if(cancelToken.IsCancellationRequested)'
             try
             {
                 if (!this.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
                 {
-                    Console.WriteLine(" Take Blocked");
+                    Debug.WriteLine("HubBlockingCollection - RemoveAndCallback() -  Take Blocked");
+                    task.Wait(); //ensure task runs till finish
                 }
                 else
                 {
-                    Console.WriteLine(" Take:{0}", item.ToString());
+                    Debug.WriteLine("HubBlockingCollection - RemoveAndCallback() - Take: "+ item.ToString());
                 }
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("Taking canceled.");
-                //break;
+                Debug.WriteLine("HubBlockingCollection - RemoveAndCallback() - Taking canceled.");
             }
-
         }
-
 
 
 
@@ -100,7 +100,7 @@ namespace SignalRChat.Common
                 //this.Dispose(); //TODO: do we need to dispose of list, will probs be garbage collected
             }
             catch(Exception e){
-                Console.WriteLine("Failed to Clear(), message : {0}", e.Message); //TODO: Handle error properly
+                Debug.WriteLine("HubBlockingCollection -  Failed to Clear(), message : "+ e.Message); //TODO: Handle error properly
             }
         }
 

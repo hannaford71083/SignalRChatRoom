@@ -1,898 +1,686 @@
 ﻿<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
+
+
 <head>
-    <title></title>
+  <title></title>
+  <link type="text/css" rel="stylesheet" href="Css/ChatStyle.css" />
+  <link rel="stylesheet" href="/Css/JQueryUI/themes/base/jquery.ui.all.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 
-    <link type="text/css" rel="stylesheet" href="Css/ChatStyle.css" />
-    <link rel="stylesheet" href="/Css/JQueryUI/themes/base/jquery.ui.all.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+  <style>
+    @font-face { 
+        font-family: 'LCD'; 
+        src:  
+            url('/css/Fonts/LCD_Solid.ttf')  format('truetype'); /*PTS55F.ttf Safari, Android, iOS */
+        font-weight: normal; 
+        font-style: normal;
+    }
+    .joined, 
+    .join, .start, 
+    .members { float:right; display: none; font-size: 10px; cursor: pointer; }
+    .memberGroup {  position: relative; }
+    ul.memberContainer { list-style: none; position: absolute; left: 215px; top: -20px; border: solid #000 1px; padding: 0; }
+    ul.memberContainer li{ padding: 5px 20px; width:100%; }
+    #divSplash, 
+    #divGame, 
+    #divResults { font-family: LCD; position: absolute; top: 0; height: 100vh; width: 100vw; text-align: center; background-color: #00B400; }
+    #divSplash *, 
+    #divGame *, 
+    #divResults *, 
+    #divChat *,   
+    #divLogin *,    
+    #header{ font-family: LCD;  }
+        #divSplash .container, 
+        #divResults .container { transform: translateY(50%); }
+    .resultsContainer table { margin:auto; }
+        .resultsContainer * { font-size: 24px; }
+        .resultsContainer tr th { width: 140px; padding-bottom: 12px;   }
+    .button { font-family: LCD; background-color: #FFF; font-size: 24px; }
+    .red { color: #f00; }
+    .privateWindow * { font-family: LCD; font-size: 14px; }
+    #divChat { position: relative; }
+    p.message { position: absolute; bottom: -20px; margin: 0; font-size: 12px; padding-bottom: 5px }
 
-    <style>
-
-
-        @font-face { 
-            font-family: 'LCD'; 
-            src:  
-               /*url('/css/fonts/DINLightAlternate.svg#Din') format('svg'),  Legacy iOS*/ 
-               /*url('/css/fonts/DINLightAlternate.eot?#iefix') format('embedded-opentype'),  IE6-IE8 */
-               /*url('/css/fonts/DINLightAlternate.woff2') format('woff2'),  Super Modern Browsers */
-               /*url('/css/fonts/DINLightAlternate.woff') format('woff'),  Pretty Modern Browsers */
-               url('/css/Fonts/LCD_Solid.ttf')  format('truetype'); /*PTS55F.ttf Safari, Android, iOS */
-               /*url('/css/fonts/FF_DIN_Pro_Light_Italic.otf') format('opentype');*/ 
-            font-weight: normal; 
-            font-style: normal;
-        }
-
-        .joined, .join, .start, .members {
-            float:right;
-            display: none;
-            font-size: 10px;
-            cursor: pointer;
-        }
-
-        .memberGroup {
-            position: relative;
-        }
-
-        ul.memberContainer {
-            list-style: none;
-            /*display:none;*/
-            position: absolute;
-            left: 215px;
-            top: -20px;
-            border: solid #000 1px;
-            padding: 0;
-        }
-
-        ul.memberContainer li{
-            padding: 5px 20px;
-            width:100%;
-        }
-
-        #divSplash, #divGame, #divResults {
-            font-family: LCD;
-            position: absolute;
-            top: 0;
-            height: 100vh;
-            width: 100vw;
-            text-align: center;
-            background-color: #00B400;
-        }
-
-
-        #divSplash *, #divGame *, #divResults *, #divChat *,   #divLogin *,    #header{
-            font-family: LCD;
-        }
-
-            #divSplash .container, #divResults .container {
-                transform: translateY(50%);
-            }
-
-
-        .resultsContainer table {
-            margin:auto;
-        }
-
-            .resultsContainer * {
-                font-size: 24px;
-            }
-
-            .resultsContainer tr th {
-                width: 140px;
-                padding-bottom: 12px;
-            }
-
-        .button {
-            font-family: LCD;
-            background-color: #FFF;
-            font-size: 24px;
-        }
-
-        .red {
-            color: red;
-        }
-
-
-        .privateWindow * {
-            font-family: LCD;
-            font-size: 14px;
-        }
-
-        #divChat {
-            position: relative;
-        }
-
-        p.message {
-            position: absolute;
-            bottom: -20px;
-            margin: 0;
-            font-size: 12px;
-            padding-bottom: 5px
-
-        }
-
-       
-    </style>
+  </style>
     
-    <!--Script references. -->
-  
-      <!--Reference the jQuery library. -->
-    <script src="/Scripts/jquery-1.8.2.js"></script>
-    <!--<script src="/Scripts/jquery-1.6.4.min.js"></script>-->
 
-
-    <script src="/Scripts/ui/jquery.ui.core.js"></script>
-    <script src="/Scripts/ui/jquery.ui.widget.js"></script>
-    <script src="/Scripts/ui/jquery.ui.mouse.js"></script>
-    <script src="/Scripts/ui/jquery.ui.draggable.js"></script>
-    <script src="/Scripts/ui/jquery.ui.resizable.js"></script>
+  <!--Script references. -->
+  <script src="/Scripts/jquery-1.8.2.js"></script><!--<script src="/Scripts/jquery-1.6.4.min.js"></script>-->
+  <script src="/Scripts/ui/jquery.ui.core.js"></script>
+  <script src="/Scripts/ui/jquery.ui.widget.js"></script>
+  <script src="/Scripts/ui/jquery.ui.mouse.js"></script>
+  <script src="/Scripts/ui/jquery.ui.draggable.js"></script>
+  <script src="/Scripts/ui/jquery.ui.resizable.js"></script>
    
-
-    <!--Reference the SignalR library. -->
-    <script src="/Scripts/jquery.signalR-2.2.0.js"></script>
-    
-    <!--Reference the autogenerated SignalR hub script. -->
-    <script src="/signalr/hubs"></script>
+  <script src="/Scripts/jquery.signalR-2.2.0.js"></script><!--Reference the SignalR library. -->
+  <script src="/signalr/hubs"></script><!--Reference the autogenerated SignalR hub script. -->
     
 
+  <script type="text/javascript">
+     
+    // ---------------------------  CLIENT OBJECTS ------------------------------------------------
 
-    <script type="text/javascript">
+    // -------------- PROGRAM Class -------------- 
+    //Holds general data needed to be persisted
+    function Program() {
+        this.groups = {};
+        this.currentUser;
+        this.screenUpdateMs = 50;   // TODO: in game object???   // screen update frequency in MS
+        this.uploadUpdateMS = 100;  // TODO: in game object???
+        this.timerTime = 200; 
+        this.stopWatch = 0;         // TODO: in game object???
+        this.timerlock = true;      // TODO: in game object???
+        this.currentPage = "login";
+    }
+
+    // -------------- USER Class -------------- 
+    //User Information for this user
+        //TODO: could be persisted with cookies 
+    function User() {
+        this.id;
+        this.name;
+    }
+
+    // -------------- GROUP Class -------------- 
+    //contains all the info for groups, should be synced with the server data
+    function Group() {
+        this.id;
+        this.object;
+        this.cachedIndex;
+    }
+
+    // ----------END--------------  CLIENT OBJECTS ---------------------END------------------------
+
+    
+
+
+
+    // -----------  ----------- CHAT ROOM KEY FUNCTIONS -----------  ----------- 
+
+    $(function () {
+        setScreen("login");
+        // GLOBAL Declare a proxy to reference the hub.
+        chatHub = $.connection.chatHub; 
+        registerClientMethods();
+        // Start Hub
+        $.connection.hub.start().done(function () {
+            registerEvents();
+        });
+    });
+
+    function setScreen(screen) {  //screen handler
+        $("#divChat").hide();
+        $("#divLogin").hide();
+        $("#header").hide();
+        $("#divSplash").hide();
+        $("#divGame").hide();
+        $("#divResults").hide();
+        switch (screen) {
+            case "login":
+                $("#header").show();
+                $("#divLogin").show();
+                break;
+            case "chat":
+                program.currentPage = "chat";
+                $("#header").show();
+                $("#divChat").show();
+
+                chatHub.server.updateClientGroups();
+                break;
+            case "splash":
+                program.currentPage = "splash";
+                keyFlashing();
+                $("#divSplash").show();
+                break;
+            case "game":
+                program.currentPage = "game";
+                canvasGame();
+                $("#divGame").show();
+                break;
+            case "results":
+                program.currentPage = "results";
+                $("#divResults").show();
+                $(".backToChat").on("click tap", function () {
+                    location.reload();
+                });
+                break;
+        }
+    }
+
+    function keyFlashing() {
+        keyFlash = setInterval(function () {
+            $(".instructions .g").toggleClass("red");
+            $(".instructions .h").toggleClass("red");
+
+        }, 500);
+        setTimeout(function () {
+            $(".instructions .g").removeClass("red");
+            $(".instructions .h").removeClass("red");
+            clearTimeout(keyFlash);
+        }, 15000);
+    }
+
+    function registerEvents() {
+        $("#btnStartChat").click(function () {
+            var name = $("#txtNickName").val();
+            if (name.length > 0) {
+                chatHub.server.connect(name);
+            }
+            else {
+                alert("Please enter name");
+            }
+        });
+        $('#btnSendMsg').click(function () {
+            var msg = $("#txtMessage").val();
+            if (msg.length > 0) {
+                var userName = $('#hdUserName').val();
+                chatHub.server.sendMessageToAll(userName, msg);
+                $("#txtMessage").val('');
+            }
+        });
+        $('#btnAddGroup').click(function () {
+            chatHub.server.addGroup(   $("#hdId").val()  );
+        });
+        $("#txtNickName").keypress(function (e) {
+            if (e.which == 13) {
+                $("#btnStartChat").click();
+            }
+        });
+        $("#txtMessage").keypress(function (e) {
+            if (e.which == 13) {
+                $('#btnSendMsg').click();
+            }
+        });
+    }
+
+
+
+
+
+    function registerClientMethods() {
+
+        // Calls when user successfully logged in
+        chatHub.client.onConnected = function (id, userName, allUsers, messages) {
+            console.log("id : ", id, ",  userName : ", userName, " , allUsers :  ", allUsers, " ,  messages : ", messages);
+            // ----- INITIALISE -----
+            program = new Program();
+            user = new User(); 
+            user.id = id;
+            user.name = userName;
+            group = new Group();
+            setScreen("chat");
+            //update DOM user info entry
+            $('#hdId').val(id);
+            $('#hdUserName').val(userName);
+            $('#spanUser').html(userName);
+            chatHub.server.updateClientGroups();
+            // Add All Users
+            for (i = 0; i < allUsers.length; i++) {
+                AddUser( allUsers[i].ConnectionId, allUsers[i].UserName);
+            }
+            // Add Existing Messages
+            for (i = 0; i < messages.length; i++) {
+                AddMessage(messages[i].UserName, messages[i].Message);
+            }
+        }
+
+        // On New User Connected
+        chatHub.client.onNewUserConnected = function (id, name) {
+            console.log("onNewUserConnected --> id : ", id, ", name :", name);
+            if (program.currentPage == "chat") {
+                AddUser(id, name);
+            }
+        }
+
+        // On User Disconnected
+        chatHub.client.onUserDisconnected = function (id, userName) {
+            console.log("onUserDisconnected --> id  : ", id, ", userName  : ", userName);
+            $('#' + id).remove();
+            var ctrId = 'private_' + id;
+            $('#' + ctrId).remove();
+            var disc = $('<div class="disconnect">"' + userName + '" logged off.</div>');
+            $(disc).hide();
+            $('#divusers').prepend(disc);
+            $(disc).fadeIn(200).delay(2000).fadeOut(200);
+        }
+
+        chatHub.client.messageReceived = function (userName, message) {
+            AddMessage(userName, message);
+        }
+
+        //will update client information related to whom is in which group
+        chatHub.client.updateGroupInfo = function (groupInfoArrayIn) {
+            var groupInfoArray = JSON.parse(groupInfoArrayIn);
+            console.log("groupInfoArray - conversion to json", groupInfoArray); 
+            for (i in groupInfoArray){ //loop groups
+                for (j in groupInfoArray[i].users) { //loop users in group
+                    var adminId = groupInfoArray[i].users[0].ConnectionId; // first person in group is admin
+                    var userId = groupInfoArray[i].users[j].ConnectionId;
+                    var userName = groupInfoArray[i].users[j].UserName;
+                    var isGroupAdmin = false;
+                    isGroupAdmin = user.id == adminId ? true : false;
+                    if (isGroupAdmin) {
+                        $(".loginUser .start").show();
+                        $(".loginUser .members").show();
+                        $("#btnAddGroup").hide();
+                        var membersObj = groupInfoArray[i].users;
+                        $(".loginUser .members").data("membersObject", membersObj);
+                        $(".loginUser .start").data("group-id", groupInfoArray[i].id);
+                        group.cachedIndex = 0;
+                        group.id = groupInfoArray[i].id;
+                        group.object = groupInfoArray[i];
+                    }
+                    else {
+                        //only show if there the user is the admin of the group i.e. index = 0
+                        if (j == 0) {
+                            $("#" + userId).find(".join").show();
+                        }
+                            
+                        if (user.id == userId) {
+                            var jj = j;
+                            group.cachedIndex = jj;
+                            group.id = groupInfoArray[i].id;
+                            group.object = groupInfoArray[i];
+                            $("#" + adminId).find(".join").hide();
+                            $("#" + adminId).find(".joined").show();
+                        }
+                    }
+
+                }
+            }
+            updateAdminGroupDetails();
+        }
+
+        chatHub.client.sendPrivateMessage = function (windowId, fromUserName, message) {
+            var ctrId = 'private_' + windowId;
+            if ($('#' + ctrId).length == 0) {
+                createPrivateChatWindow( windowId, ctrId, fromUserName);
+            }
+            $('#' + ctrId).find('#divMessage').append('<div class="message"><span class="userName">' + fromUserName + '</span>: ' + message + '</div>');
+            // set scrollbar
+            var height = $('#' + ctrId).find('#divMessage')[0].scrollHeight;
+            $('#' + ctrId).find('#divMessage').scrollTop(height);
+        }
+
+        chatHub.client.showSplash = function () {
+            $(".readyButton").show();
+            $(".waiting").hide();
+            setScreen("splash");
+
+            $(".readyButton").on("click", function ()
+            {
+                //looks through all players in group, if all ready then go to next screen
+                chatHub.server.playerReady(user.id, group.id );
+                $(".readyButton").hide();
+                $(".waiting").show();
+            });
+        }
+
+        chatHub.client.showGameScreen = function () {
+            setScreen("game");
+            canvasGame();
+        }
+
+        chatHub.client.updateGame = function (outputIn) {
+            var output = JSON.parse(outputIn);
+            for(i in game.players) {
+                if (i != game.cachedIndex) {
+                    var pressesFromServers = output.users[i].KeyPresses;
+                    if (game.players[i].distancePresses < pressesFromServers) {
+
+                        game.players[i].distancePresses = pressesFromServers;
+                    }
+                }
+            }
+        }
+
+    } //registerClientMethods()
+
+
+
+
+    function updateAdminGroupDetails() {
+        var members = $(".members").data("membersObject");
+        var membersHtml = "<ul class='memberContainer'>";
+        for (i in members) {
+            if (i == 0) {
+                membersHtml += "<li  data-id='" + members[i].ConnectionId + "'>MEMBERS:</li>"; //HACK to show members lable
+            }
+            membersHtml += "<li data-id='" + members[i].ConnectionId + "' >" + members[i].UserName + "</li>";
+        }
+        membersHtml += "</ul>";
+        $(".memberGroup").html(membersHtml);
+    }
+
+    function AddUser( id, name) {
+        var userId = $('#hdId').val();
+        var code = "";
+        if (userId == id) {
+            code = $('<div class="loginUser">' + name + " <a class='members'>&nbsp;</a><a class='start'>&nbsp;start&nbsp;</a><span class='memberGroup'></span></div>"); //members&nbsp;
+            $(code).find(".members").on("click tap", function () {
+                updateAdminGroupDetails();
+            });
+            $(code).find(".start").on("click tap", function () {
+                var groupID = $(this).data("group-id");
+                var a = chatHub.server.signalStartGame(groupID); //HACK : requires calling twice for some reason
+                console.log(a);
+                chatHub.server.signalStartGame(groupID);
+            });
+        }
+        else {
+            code = $('<a id="' + id + '" class="user" >' + name + "<span class='join'>&nbsp;join&nbsp;</span><span class='joined'>&nbsp;joined&nbsp;</span><a></div>");
+            $(code).dblclick(function () {
+                var id = $(this).attr('id');
+                if (userId != id)
+                    OpenPrivateChatWindow( id, name);
+            });
+            $(code).find(".join").on("click", function () {
+                //Not Group ID but is the admin for that group, can get group using C# Group.getAdminId() 
+                var adminID = id;
+                //add the user to group addUserToGroup(user, adminID);
+                chatHub.server.addUserToGroup(user.id, adminID);
+            });
+        }
+        $("#divusers").append(code);
+    }
+
+    function AddMessage(userName, message) {
+        $('#divChatWindow').append('<div class="message"><span class="userName">' + userName + '</span>: ' + message + '</div>');
+        var height = $('#divChatWindow')[0].scrollHeight;
+        $('#divChatWindow').scrollTop(height);
+    }
+
+
+
+
+    // -----------  ----------- PRIVATE CHAT -----------  ----------- 
+
+    function OpenPrivateChatWindow( id, userName) {
+        var ctrId = 'private_' + id;
+        if ($('#' + ctrId).length > 0) return;
+        createPrivateChatWindow( id, ctrId, userName);
+    }
+
+    function createPrivateChatWindow( userId, ctrId, userName) {
+        var div = '<div id="' + ctrId + '" class="ui-widget-content draggable privateWindow" rel="0">' +
+                    '<div class="header">' +
+                        '<div  style="float:right;">' +
+                            '<img id="imgDelete"  style="cursor:pointer;" src="/Images/delete.png"/>' +
+                        '</div>' +
+
+                        '<span class="selText" rel="0">' + userName + '</span>' +
+                    '</div>' +
+                    '<div id="divMessage" class="messageArea">' +
+
+                    '</div>' +
+                    '<div class="buttonBar">' +
+                        '<input id="txtPrivateMessage" class="msgText" type="text"   />' +
+                        '<input id="btnSendMessage" class="submitButton button" type="button" value="Send"   />' +
+                    '</div>' +
+                '</div>';
+
+        var $div = $(div);
+        // DELETE BUTTON IMAGE
+        $div.find('#imgDelete').click(function () {
+            $('#' + ctrId).remove();
+        });
+        // Send Button event
+        $div.find("#btnSendMessage").click(function () {
+            $textBox = $div.find("#txtPrivateMessage");
+            var msg = $textBox.val();
+            if (msg.length > 0) {
+                chatHub.server.sendPrivateMessage(userId, msg);
+                $textBox.val('');
+            }
+        });
+        // Text Box event
+        $div.find("#txtPrivateMessage").keypress(function (e) {
+            if (e.which == 13) {
+                $div.find("#btnSendMessage").click();
+            }
+        });
+        AddDivToContainer($div);
+    }
+
+    function AddDivToContainer($div) {
+        $('#divContainer').prepend($div);
+        $div.draggable({
+            handle: ".header",
+            stop: function () {
+
+            }
+        });
+    }
+
+
+
+
+
+    // -----------  ----------- CANVAS GAME -----------  ----------- 
+
+    //not in global scope, watch the scope of variables
+    function canvasGame() {
         
 
-        // ---------------------------  CLIENT OBJECTS ------------------------------------------------
+        // -----------  GAME OBJECTS ----------- 
 
+        function canvasObj(X, Y, Width, Height, path) {
+            //position
+            this.x = X;
+            this.y = Y;
+            //dimensions
+            this.imgWidth = Width;
+            this.imgHeight = Height;
+            //image object
+            this.imageObj = new Image();
+            this.imageObj.src = path;
+        }
 
-        // -------------- PROGRAM Class -------------- 
+        function GameObject() {
+            this.totalPresses = 50;
+            this.trackDistancePixels = 800; //calculated
+            this.speedRefreshPerSec = 10;
+            this.players = [];
+            this.startPixelX = 50;
+            this.finishPosition = [];
+        }
 
-        //Holds general data needed to be persisted
-        function Program() {
-            this.groups = {};
-            this.currentUser;
-            this.screenUpdateMs = 50;   // TODO: in game object???   // screen update frequency in MS
-            this.uploadUpdateMS = 100;  // TODO: in game object???
-            this.timerTime = 200; 
-            this.stopWatch = 0;         // TODO: in game object???
-            this.timerlock = true;      // TODO: in game object???
-            this.currentPage = "login";
+        function Player(inName, inId) {
+            this.name = inName;
+            this.id = inId;
+            this.canvasObject;
+            this.distancePresses = 0;
+            this.raceComplete = false;
+            this.increment = function () {
+                if (this.raceComplete) { return; }
+                this.distancePresses++;
+                var addDistance = game.trackDistancePixels / (game.totalPresses / this.distancePresses);
+                newDistance = this.canvasObject.x + addDistance;
+                this.canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
+            }
+
         }
 
 
-        // -------------- USER Class -------------- 
 
-        //User Information for this user
-            //LATERZ - could be persisted with cookies 
-        function User() {
-            this.id;
-            this.name;
+        // -----------  GAME INIT ----------- 
+
+        var canvas = document.getElementById('myCanvas');
+        var c = canvas.getContext('2d');
+        //var canary = []; //CANvas ARraY
+        var staticCanary = []; //static CANvas ARraY
+
+        //static objects
+        crowd1 = new canvasObj(0, 0, 300, 200, 'Images/tiled-crowd.png');
+        crowd2 = new canvasObj(300, 0, 300, 200, 'Images/tiled-crowd.png');
+        crowd3 = new canvasObj(600, 0, 300, 200, 'Images/tiled-crowd.png');
+        crowd4 = new canvasObj(900, 0, 300, 200, 'Images/tiled-crowd.png');
+
+        board1 = new canvasObj(50, 180, 300, 40, 'Images/pds-board.png');
+        board2 = new canvasObj(350, 180, 300, 40, 'Images/pds-board.png');
+        board3 = new canvasObj(650, 180, 300, 40, 'Images/pds-board.png');
+        board4 = new canvasObj(950, 180, 300, 40, 'Images/pds-board.png');
+
+        line1 = new canvasObj(100, 220, 950, 5, 'Images/line.png');
+        line2 = new canvasObj(100, 350, 950, 5, 'Images/line.png');
+        line3 = new canvasObj(100, 480, 950, 5, 'Images/line.png');
+        line4 = new canvasObj(100, 610, 950, 5, 'Images/line.png');
+        line5 = new canvasObj(100, 740, 950, 5, 'Images/line.png');
+        line6 = new canvasObj(200, 220, 10, 525, 'Images/line.png');
+        line7 = new canvasObj(1000, 220, 10, 525, 'Images/line.png');
+
+        staticCanary.push(crowd1);
+        staticCanary.push(crowd2);
+        staticCanary.push(crowd3);
+        staticCanary.push(crowd4);
+        staticCanary.push(board1);
+        staticCanary.push(board2);
+        staticCanary.push(board3);
+        staticCanary.push(board4);
+
+        staticCanary.push(line1);
+        staticCanary.push(line2);
+        staticCanary.push(line3);
+        staticCanary.push(line4);
+        staticCanary.push(line5);
+        staticCanary.push(line6);
+        staticCanary.push(line7);
+        //moving objects 
+
+        // update other players 
+        game = new GameObject(); //singleton - dont make anoter!
+        var yCoords = [260, 390, 520, 650];
+        for (i in group.object.users) { //testobject.users
+            var player = new Player(group.object.users[i].UserName, group.object.users[i].ConnectionId);
+            player.canvasObject = new canvasObj( game.startPixelX , yCoords[i], 125, 125, 'Images/pixel-runner.png');
+            game.players.push(player);
         }
 
-
-        // -------------- GROUP Class -------------- 
-
-        //contains all the info for groups, should be synced with the server data
-        function Group() {
-            this.id;
-            this.object;
-            this.cachedIndex;
-        }
+        draw();
+	        
+        setInterval(uploadData, program.uploadUpdateMS);
 
 
-        // ----------END--------------  CLIENT OBJECTS ---------------------END------------------------
+        // -----------  GAME FUNCTIONS ----------- 
 
-
-
-
-        $(function () {
-
-            setScreen("login");
-
-            // GLOBAL Declare a proxy to reference the hub. 
-            chatHub = $.connection.chatHub;
-
-            registerClientMethods();
-
-            // Start Hub
-            $.connection.hub.start().done(function () {
-                registerEvents();
-            });
-
+        var player_keys = [71, 72]; // g & h
+        var index = 0;
+        document.body.addEventListener('keydown', function (e) {
+            //player_keys
+            if (e.keyCode == player_keys[index] && !program.timerlock) {
+                game.players[group.cachedIndex].increment(); //increment distance
+                index = changeI(index);
+            }
         });
 
 
-
-        function setScreen(screen) {  //screen handler
-
-            $("#divChat").hide();
-            $("#divLogin").hide();
-            $("#header").hide();
-            $("#divSplash").hide();
-            $("#divGame").hide();
-            $("#divResults").hide();
-
-            switch (screen) {
-                case "login":
-                    $("#header").show();
-                    $("#divLogin").show();
-                    break;
-                case "chat":
-                    program.currentPage = "chat";
-                    $("#header").show();
-                    $("#divChat").show();
-
-                    chatHub.server.updateClientGroups();
-                    break;
-                case "splash":
-                    program.currentPage = "splash";
-                    keyFlashing();
-                    $("#divSplash").show();
-                    break;
-                case "game":
-                    program.currentPage = "game";
-                    canvasGame();
-                    $("#divGame").show();
-                    break;
-                case "results":
-                    program.currentPage = "results";
-                    $("#divResults").show();
-                    $(".backToChat").on("click tap", function () {
-                        location.reload();
-                    });
-                    break;
-            }
-
+        //For initial startoff countdown and stopwatch
+        function countdown() {
+            var caption;
+            caption = Math.ceil(program.timerTime / 50) + "";
+            c.fillStyle = '#FFF';
+            c.font = "120px LCD";
+            c.fillText(caption, 500, 470);
+            program.timerTime--;
         }
 
-        function keyFlashing() {
-
-            keyFlash = setInterval(function () {
-                $(".instructions .g").toggleClass("red");
-                $(".instructions .h").toggleClass("red");
-
-            }, 500);
-
-            setTimeout(function () {
-                $(".instructions .g").removeClass("red");
-                $(".instructions .h").removeClass("red");
-                clearTimeout(keyFlash);
-            }, 15000);
-
+        function stopWatchUpdate() {
+            var caption = "";
+            program.timerlock = false;
+            c.font = "50px LCD";
+            c.fillText((program.stopWatch / 50), 450, 790);
+            //console.log("program.stopWatch / 50 : "+ program.stopWatch );
+            program.stopWatch++;
         }
 
-        
 
-
-        function registerEvents() {
-
-            $("#btnStartChat").click(function () {
-                var name = $("#txtNickName").val();
-                if (name.length > 0) {
-                    chatHub.server.connect(name);
+        //Screen refresh every 0.1 secs OR 100ms 
+        function draw() {
+            //c.clearRect(); //TODO: clear this
+            c.fillStyle = '#00B400'; //fill entire grid with white
+            c.fillRect(0, 0, canvas.width, canvas.height);
+            preperationTasks();
+            generatedStatic();
+            if (program.currentPage == "game") {
+                if (program.timerTime <= 0) {
+                    stopWatchUpdate();
                 }
                 else {
-                    alert("Please enter name");
+                    countdown();
                 }
-            });
-
-            $('#btnSendMsg').click(function () {
-                var msg = $("#txtMessage").val();
-                if (msg.length > 0) {
-                    var userName = $('#hdUserName').val();
-                    chatHub.server.sendMessageToAll(userName, msg);
-                    $("#txtMessage").val('');
-                }
-            });
-
-            $('#btnAddGroup').click(function () {
-                chatHub.server.addGroup(   $("#hdId").val()  );
-            });
-
-            $("#txtNickName").keypress(function (e) {
-                if (e.which == 13) {
-                    $("#btnStartChat").click();
-                }
-            });
-
-            $("#txtMessage").keypress(function (e) {
-                if (e.which == 13) {
-                    $('#btnSendMsg').click();
-                }
-            });
-
+            }
+            drawImgs();
+            setTimeout(draw, program.screenUpdateMs );
         }
-
-
-        function registerClientMethods() {
-
-            // Calls when user successfully logged in
-            chatHub.client.onConnected = function (id, userName, allUsers, messages) {
-
-                // ----- INITIALISE -----
-                program = new Program();
-                user = new User(); 
-                user.id = id;
-                user.name = userName;
-
-                group = new Group();
-
-                setScreen("chat");
-
-                $('#hdId').val(id);
-                $('#hdUserName').val(userName);
-                $('#spanUser').html(userName);
-
-                // Add All Users
-                for (i = 0; i < allUsers.length; i++) {
-                    AddUser( allUsers[i].ConnectionId, allUsers[i].UserName);
-                }
-
-                // Add Existing Messages
-                for (i = 0; i < messages.length; i++) {
-                    AddMessage(messages[i].UserName, messages[i].Message);
-                }
-
-            }
-
-
-            // On New User Connected
-            chatHub.client.onNewUserConnected = function (id, name) {
-                //console.log("group.currentPage : " + program.currentPage);
-                if (program.currentPage == "chat") {
-                    AddUser(id, name);
-                }
-            }
-
-
-            // On User Disconnected
-            chatHub.client.onUserDisconnected = function (id, userName) {
-                $('#' + id).remove();
-                var ctrId = 'private_' + id;
-                $('#' + ctrId).remove();
-                var disc = $('<div class="disconnect">"' + userName + '" logged off.</div>');
-                $(disc).hide();
-                $('#divusers').prepend(disc);
-                $(disc).fadeIn(200).delay(2000).fadeOut(200);
-            }
-
-            chatHub.client.messageReceived = function (userName, message) {
-                AddMessage(userName, message);
-            }
-
-
-            //will update client information related to whom is in which group
-            chatHub.client.updateGroupInfo = function (groupInfoArrayIn) {
-
-                var groupInfoArray = JSON.parse(groupInfoArrayIn);
-                //console.log("groupInfoArray - conversion to json"); console.log(groupInfoArray);
-
-                for (i in groupInfoArray){ //loop groups
-                    for (j in groupInfoArray[i].users) { //loop users in group
-                        var adminId = groupInfoArray[i].users[0].ConnectionId; // first person in group is admin
-                        var userId = groupInfoArray[i].users[j].ConnectionId;
-                        var userName = groupInfoArray[i].users[j].UserName;
-
-                        var isGroupAdmin = false;
-                        isGroupAdmin = user.id == adminId ? true : false;
-
-                        if (isGroupAdmin) {
-                            $(".loginUser .start").show();
-                            $(".loginUser .members").show();
-                            $("#btnAddGroup").hide();
-                            var membersObj = groupInfoArray[i].users;
-                            $(".loginUser .members").data("membersObject", membersObj);
-                            $(".loginUser .start").data("group-id", groupInfoArray[i].id);
-                            group.cachedIndex = 0;
-                            group.id = groupInfoArray[i].id;
-                            group.object = groupInfoArray[i];
-                        }
-                        else {
-                            //only show if there the user is the admin of the group i.e. index = 0
-                            if (j == 0) {
-                                $("#" + userId).find(".join").show();
-                            }
-                            
-                            if (user.id == userId) {
-                                var jj = j;
-                                group.cachedIndex = jj;
-                                group.id = groupInfoArray[i].id;
-                                group.object = groupInfoArray[i];
-                                $("#" + adminId).find(".join").hide();
-                                $("#" + adminId).find(".joined").show();
-                            }
-                        }
-
-                    }
-                }
-
-                updateAdminGroupDetails();
-
-            }
-
-
-
-            chatHub.client.sendPrivateMessage = function (windowId, fromUserName, message) {
-                var ctrId = 'private_' + windowId;
-
-                if ($('#' + ctrId).length == 0) {
-                    createPrivateChatWindow( windowId, ctrId, fromUserName);
-                }
-
-                $('#' + ctrId).find('#divMessage').append('<div class="message"><span class="userName">' + fromUserName + '</span>: ' + message + '</div>');
-
-                // set scrollbar
-                var height = $('#' + ctrId).find('#divMessage')[0].scrollHeight;
-                $('#' + ctrId).find('#divMessage').scrollTop(height);
-            }
-
-
-            chatHub.client.showSplash = function () {
-
-                $(".readyButton").show();
-                $(".waiting").hide();
-
-                setScreen("splash");
-                
-                $(".readyButton").on("click", function ()
-                {
-                    //looks through all players in group, if all ready then go to next screen
-                    chatHub.server.playerReady(user.id, group.id );
-                    $(".readyButton").hide();
-                    $(".waiting").show();
-                });
-
-            }
-
-
-            chatHub.client.showGameScreen = function () {
-                setScreen("game");
-                canvasGame();
-            }
-
-
-
-            chatHub.client.updateGame = function (outputIn) {
-                var output = JSON.parse(outputIn);
-                
-                for(i in game.players) {
-                    if (i != game.cachedIndex) {
-                        var pressesFromServers = output.users[i].KeyPresses;
-                        if (game.players[i].distancePresses < pressesFromServers) {
-
-                            game.players[i].distancePresses = pressesFromServers;
-                        }
-                    }
-                }
-
-            }
-
-
-
-        } //registerClientMethods()
-
-
-
-        function updateAdminGroupDetails() {
-            var members = $(".members").data("membersObject");
-            var membersHtml = "<ul class='memberContainer'>";
-             
-
-            for (i in members) {
-                if (i == 0) {
-                    membersHtml += "<li  data-id='" + members[i].ConnectionId + "'>MEMBERS:</li>"; //HACK to show members lable
-                }
-                membersHtml += "<li data-id='" + members[i].ConnectionId + "' >" + members[i].UserName + "</li>";
-            }
-            membersHtml += "</ul>";
-            $(".memberGroup").html(membersHtml);
-        }
-
-
-
-        function AddUser( id, name) {
-            var userId = $('#hdId').val();
-            var code = "";
-
-            if (userId == id) {
-                code = $('<div class="loginUser">' + name + " <a class='members'>&nbsp;</a><a class='start'>&nbsp;start&nbsp;</a><span class='memberGroup'></span></div>"); //members&nbsp;
-
-                $(code).find(".members").on("click tap", function () {
-                    updateAdminGroupDetails();
-                });
-
-                $(code).find(".start").on("click tap", function () {
-                    var groupID = $(this).data("group-id");
-                    var a = chatHub.server.signalStartGame(groupID); //HACK : requires calling twice for some reason
-                    console.log(a);
-                    chatHub.server.signalStartGame(groupID);
-                });
-            }
-            else {
-                code = $('<a id="' + id + '" class="user" >' + name + "<span class='join'>&nbsp;join&nbsp;</span><span class='joined'>&nbsp;joined&nbsp;</span><a></div>");
-                $(code).dblclick(function () {
-                    var id = $(this).attr('id');
-                    if (userId != id)
-                        OpenPrivateChatWindow( id, name);
-                });
-                $(code).find(".join").on("click", function () {
-                    //Not Group ID but is the admin for that group, can get group using C# Group.getAdminId() 
-                    var adminID = id;
-                    //add the user to group addUserToGroup(user, adminID);
-                    chatHub.server.addUserToGroup(user.id, adminID);
-                });
-                
-            }
-
-            $("#divusers").append(code);
-            
-        }
-
-
-        function AddMessage(userName, message) {
-            $('#divChatWindow').append('<div class="message"><span class="userName">' + userName + '</span>: ' + message + '</div>');
-            var height = $('#divChatWindow')[0].scrollHeight;
-            $('#divChatWindow').scrollTop(height);
-        }
-
-        function OpenPrivateChatWindow( id, userName) {
-            var ctrId = 'private_' + id;
-            if ($('#' + ctrId).length > 0) return;
-            createPrivateChatWindow( id, ctrId, userName);
-        }
-
-
-
-        function createPrivateChatWindow( userId, ctrId, userName) {
-
-            var div = '<div id="' + ctrId + '" class="ui-widget-content draggable privateWindow" rel="0">' +
-                       '<div class="header">' +
-                          '<div  style="float:right;">' +
-                              '<img id="imgDelete"  style="cursor:pointer;" src="/Images/delete.png"/>' +
-                           '</div>' +
-
-                           '<span class="selText" rel="0">' + userName + '</span>' +
-                       '</div>' +
-                       '<div id="divMessage" class="messageArea">' +
-
-                       '</div>' +
-                       '<div class="buttonBar">' +
-                          '<input id="txtPrivateMessage" class="msgText" type="text"   />' +
-                          '<input id="btnSendMessage" class="submitButton button" type="button" value="Send"   />' +
-                       '</div>' +
-                    '</div>';
-
-            var $div = $(div);
-
-            // DELETE BUTTON IMAGE
-            $div.find('#imgDelete').click(function () {
-                $('#' + ctrId).remove();
-            });
-
-            // Send Button event
-            $div.find("#btnSendMessage").click(function () {
-
-                $textBox = $div.find("#txtPrivateMessage");
-                var msg = $textBox.val();
-                if (msg.length > 0) {
-
-                    chatHub.server.sendPrivateMessage(userId, msg);
-                    $textBox.val('');
-                }
-            });
-
-            // Text Box event
-            $div.find("#txtPrivateMessage").keypress(function (e) {
-                if (e.which == 13) {
-                    $div.find("#btnSendMessage").click();
-                }
-            });
-
-            AddDivToContainer($div);
-
-        }
-
-
-        function AddDivToContainer($div) {
-            $('#divContainer').prepend($div);
-
-            $div.draggable({
-                handle: ".header",
-                stop: function () {
-
-                }
-            });
-
-        }
-
-
-
-
-
-        //not in global scope, watch the scope of variables
-        function canvasGame() {
-
-            var canvas = document.getElementById('myCanvas');
-            var c = canvas.getContext('2d');
-            
-            function canvasObj(X, Y, Width, Height, path) {
-                //position
-                this.x = X;
-                this.y = Y;
-                //dimensions
-                this.imgWidth = Width;
-                this.imgHeight = Height;
-                //image object
-                this.imageObj = new Image();
-                this.imageObj.src = path;
-            }
-
-            //var canary = []; //CANvas ARraY
-            var staticCanary = []; //static CANvas ARraY
-
-
-            //static objects
-            crowd1 = new canvasObj(0, 0, 300, 200, 'Images/tiled-crowd.png');
-            crowd2 = new canvasObj(300, 0, 300, 200, 'Images/tiled-crowd.png');
-            crowd3 = new canvasObj(600, 0, 300, 200, 'Images/tiled-crowd.png');
-            crowd4 = new canvasObj(900, 0, 300, 200, 'Images/tiled-crowd.png');
-
-            board1 = new canvasObj(50, 180, 300, 40, 'Images/pds-board.png');
-            board2 = new canvasObj(350, 180, 300, 40, 'Images/pds-board.png');
-            board3 = new canvasObj(650, 180, 300, 40, 'Images/pds-board.png');
-            board4 = new canvasObj(950, 180, 300, 40, 'Images/pds-board.png');
-
-            line1 = new canvasObj(100, 220, 950, 5, 'Images/line.png');
-            line2 = new canvasObj(100, 350, 950, 5, 'Images/line.png');
-            line3 = new canvasObj(100, 480, 950, 5, 'Images/line.png');
-            line4 = new canvasObj(100, 610, 950, 5, 'Images/line.png');
-            line5 = new canvasObj(100, 740, 950, 5, 'Images/line.png');
-            line6 = new canvasObj(200, 220, 10, 525, 'Images/line.png');
-            line7 = new canvasObj(1000, 220, 10, 525, 'Images/line.png');
-
-            staticCanary.push(crowd1);
-            staticCanary.push(crowd2);
-            staticCanary.push(crowd3);
-            staticCanary.push(crowd4);
-            staticCanary.push(board1);
-            staticCanary.push(board2);
-            staticCanary.push(board3);
-            staticCanary.push(board4);
-
-            staticCanary.push(line1);
-            staticCanary.push(line2);
-            staticCanary.push(line3);
-            staticCanary.push(line4);
-            staticCanary.push(line5);
-            staticCanary.push(line6);
-            staticCanary.push(line7);
-            //moving objects 
-            
-            
-
-            function GameObject() {
-                this.totalPresses = 50;
-                this.trackDistancePixels = 800; //calculated
-                this.speedRefreshPerSec = 10;
-                this.players = [];
-                this.startPixelX = 50;
-                this.finishPosition = [];
-            }
-
-
-            function Player(inName, inId) {
-                this.name = inName;
-                this.id = inId;
-                this.canvasObject;
-                this.distancePresses = 0;
-                this.raceComplete = false;
-                this.increment = function () {
-                    if (this.raceComplete) {  return; }
-                    this.distancePresses++;
-                    var addDistance =  game.trackDistancePixels / (game.totalPresses / this.distancePresses);
-                    newDistance = this.canvasObject.x + addDistance;
-                    this.canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
-                }
-
-            }
-
-           
-            /* UPDATE OTHER PLAYERS */
-
-            game = new GameObject(); //singleton - dont make anoter!
-            var yCoords = [260, 390, 520, 650];
-
-            for (i in group.object.users) { //testobject.users
-                var player = new Player(group.object.users[i].UserName, group.object.users[i].ConnectionId);
-                player.canvasObject = new canvasObj( game.startPixelX , yCoords[i], 125, 125, 'Images/pixel-runner.png');
-                game.players.push(player);
-            }
-
-	
-            draw();
-	        
-            //Screen refresh every 0.1 secs OR 100ms 
-            function draw() {
-                //c.clearRect(); //TODO: clear this
-                c.fillStyle = '#00B400'; //fill entire grid with white
-                c.fillRect(0, 0, canvas.width, canvas.height);
-                preperationTasks();
-                generatedStatic();
-                if (program.currentPage == "game") {
-                    if (program.timerTime <= 0) {
-                        stopWatchUpdate();
-                    }
-                    else {
-                        countdown();
-                    }
-                }
-                drawImgs();
-                
-                setTimeout(draw, program.screenUpdateMs );
-            }
 		
-
-
-
-
-            //refactor this? as want to keep objects separate
-            function preperationTasks() {
-
-                for (i in game.players) {
-                    //update canvas with presses position
-                    var addDistance = game.trackDistancePixels / (game.totalPresses / game.players[i].distancePresses);
-                    newDistance = game.players[i].canvasObject.x + addDistance;
-                    game.players[i].canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
-
-                    //check if the race is finished
-                    if (game.players[i].distancePresses > game.totalPresses && game.players[i].raceComplete == false ) {
-                        game.players[i].raceComplete = true;
-                        game.finishPosition.push({name : game.players[i].name, time: (program.stopWatch / 50) });
-                        if (game.finishPosition.length >= game.players.length) {
-
-                            var html = "<table>";
-                            html += "<tr><th>POSITION</th><th>NAME</th><th>TIME</th></tr>"; //
-                            for (j in game.finishPosition) {
-                                var pos = parseInt(j) + 1;
-                                html += "<tr><td>" + pos + "</td><td>" + game.finishPosition[j].name + "</td><td>" + game.finishPosition[j].time + "</td></tr>";
-                            }
-
-                            html += "</table>"
-                            $(".resultsContainer").html(html);
-                            
-                            setScreen("results");
-
+        //TODO: refactor this? as want to keep objects separate
+        function preperationTasks() {
+            for (i in game.players) {
+                //update canvas with presses position
+                var addDistance = game.trackDistancePixels / (game.totalPresses / game.players[i].distancePresses);
+                newDistance = game.players[i].canvasObject.x + addDistance;
+                game.players[i].canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
+                //check if the race is finished
+                if (game.players[i].distancePresses > game.totalPresses && game.players[i].raceComplete == false ) {
+                    game.players[i].raceComplete = true;
+                    game.finishPosition.push({name : game.players[i].name, time: (program.stopWatch / 50) });
+                    if (game.finishPosition.length >= game.players.length) {
+                        var html = "<table>";
+                        html += "<tr><th>POSITION</th><th>NAME</th><th>TIME</th></tr>"; //
+                        for (j in game.finishPosition) {
+                            var pos = parseInt(j) + 1;
+                            html += "<tr><td>" + pos + "</td><td>" + game.finishPosition[j].name + "</td><td>" + game.finishPosition[j].time + "</td></tr>";
                         }
+                        html += "</table>"
+                        $(".resultsContainer").html(html);
+                        setScreen("results");
                     }
-
-                }
-
-            }
-
-
-
-            
-            function uploadData() {   //string groupId, string playerId, string presses
-                if (program.currentPage != "game") { return; }
-
-                chatHub.server.uploadData(group.id, user.id, game.players[group.cachedIndex].distancePresses );
-            }
-
-
-
-
-            function drawImgs(){
-                //iterate array and draw each image
-                for (i in staticCanary) {
-                    drawObj(staticCanary[i]);
-                }
-
-                for(i in game.players){
-                    drawObj( game.players[i].canvasObject );
                 }
             }
-	
+        }
+  
+        function uploadData() {   //string groupId, string playerId, string presses
+            if (program.currentPage != "game") { return; }
+            chatHub.server.uploadData(group.id, user.id, game.players[group.cachedIndex].distancePresses );
+        }
 
-            function drawObj(canObj){
-                var centerX = canObj.x - (canObj.imageObj.width / 2);
-                var centerY = canObj.y -  (canObj.imageObj.height / 2);
-                c.drawImage(canObj.imageObj, centerX, centerY, canObj.imgWidth, canObj.imgHeight );
+        function drawImgs(){
+            //iterate array and draw each image
+            for (i in staticCanary) {
+                drawObj(staticCanary[i]);
             }
-
-
-            function generatedStatic() {
-                c.fillStyle = '#FFF';
-                c.font = "30px LCD";
-                for (i in game.players) {
-                    c.fillText(game.players[i].name, 160, ( yCoords[i] + 30 ) );
-                }
+            for(i in game.players){
+                drawObj( game.players[i].canvasObject );
             }
+        }
 
+        function drawObj(canObj){
+            var centerX = canObj.x - (canObj.imageObj.width / 2);
+            var centerY = canObj.y -  (canObj.imageObj.height / 2);
+            c.drawImage(canObj.imageObj, centerX, centerY, canObj.imgWidth, canObj.imgHeight );
+        }
 
-            var player_keys = [71, 72]; // g & h
-            var index = 0; 
-
-            function changeI(index) {
-                return a = index == 0 ? 1 : 0;
+        function generatedStatic() {
+            c.fillStyle = '#FFF';
+            c.font = "30px LCD";
+            for (i in game.players) {
+                c.fillText(game.players[i].name, 160, ( yCoords[i] + 30 ) );
             }
+        }
+
+        function changeI(index) {
+            return a = index == 0 ? 1 : 0;
+        }
 
 
-            document.body.addEventListener('keydown', function (e) {
-                //player_keys
-                if (e.keyCode == player_keys[index] && !program.timerlock ) {
-                    game.players[group.cachedIndex].increment(); //increment distance
-                    index = changeI(index);
-                }
-            });
+    }// ---- END CanvasGame() ----
 
 
-            //For initial startoff countdown and stopwatch
-            function countdown() {
-
-                //on start - 
-                //CLIENT updateCountdown 
-                
-                var caption;
-
-                //if (program.timerTime <= 0) {
-                //    caption = "";
-                //    program.timerlock = false;
-                //    c.font = "50px LCD";
-
-
-                //    //need to get time at start of game
-                //    //need to check 
-
-                //    c.fillText((program.stopWatch / 50), 450, 790);
-
-                //    console.log("program.stopWatch / 50 : "+ program.stopWatch );
-
-                //    program.stopWatch++;
-                //}
-                //else {
-                    
-                //}
-
-                caption = Math.ceil(program.timerTime / 50) + "";
-
-                c.fillStyle = '#FFF';
-                c.font = "120px LCD";
-                c.fillText(caption, 500, 470);
-
-                program.timerTime--;
-            }
-
-
-
-
-            function stopWatchUpdate() {
-
-                var caption = "";
-                program.timerlock = false;
-                c.font = "50px LCD";
-
-                //need to get time at start of game
-                //need to check 
-
-                c.fillText((program.stopWatch / 50), 450, 790);
-
-                console.log("program.stopWatch / 50 : "+ program.stopWatch );
-
-                program.stopWatch++;
-
-                //c.fillStyle = '#FFF';
-                //c.font = "120px LCD";
-                //c.fillText(caption, 500, 470);
-
-            }
-
-            setInterval(uploadData, program.uploadUpdateMS  );
-
-        }// ---- END CanvasGame() ----
-
-
-
-
-    </script>
+  </script>
     
 </head>
+
 <body>
     <div id="header">
         Running Simulator 2000 Chat Room
@@ -962,8 +750,6 @@
             </div>
         </div>
 
-
-
         <div id="divResults">
             <div class="container">
                 <h1>Results</h1>
@@ -975,13 +761,73 @@
             </div>
         </div>
 
-
-
-
-
-
     </div>
-
 
 </body>
 </html>
+
+
+<!-- 
+    FUTURE IMPROVEMENTS:
+    1) Need to seperate the GAME from CHAT ROOM logic
+
+     @font-face { 
+            font-family: 'LCD'; 
+            src:  
+               /*url('/css/fonts/DINLightAlternate.svg#Din') format('svg'),  Legacy iOS*/ 
+               /*url('/css/fonts/DINLightAlternate.eot?#iefix') format('embedded-opentype'),  IE6-IE8 */
+               /*url('/css/fonts/DINLightAlternate.woff2') format('woff2'),  Super Modern Browsers */
+               /*url('/css/fonts/DINLightAlternate.woff') format('woff'),  Pretty Modern Browsers */
+               url('/css/Fonts/LCD_Solid.ttf')  format('truetype'); /*PTS55F.ttf Safari, Android, iOS */
+            font-weight: normal; 
+            font-style: normal;
+        }
+    
+         //For initial startoff countdown and stopwatch
+        function countdown() {
+            //on start - 
+            //CLIENT updateCountdown 
+                
+            var caption;
+
+            //if (program.timerTime <= 0) {
+            //    caption = "";
+            //    program.timerlock = false;
+            //    c.font = "50px LCD";
+
+
+            //    //need to get time at start of game
+            //    //need to check 
+
+            //    c.fillText((program.stopWatch / 50), 450, 790);
+
+            //    console.log("program.stopWatch / 50 : "+ program.stopWatch );
+
+            //    program.stopWatch++;
+            //}
+            //else {
+                    
+            //}
+
+            caption = Math.ceil(program.timerTime / 50) + "";
+
+            c.fillStyle = '#FFF';
+            c.font = "120px LCD";
+            c.fillText(caption, 500, 470);
+
+            program.timerTime--;
+        }
+
+        function stopWatchUpdate() {
+            var caption = "";
+            program.timerlock = false;
+            c.font = "50px LCD";
+            //need to get time at start of game
+            //need to check 
+            c.fillText((program.stopWatch / 50), 450, 790);
+            //console.log("program.stopWatch / 50 : "+ program.stopWatch );
+            program.stopWatch++;
+
+        }
+
+    --> 
