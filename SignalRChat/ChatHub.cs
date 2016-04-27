@@ -24,10 +24,9 @@ namespace SignalRChat
         /*
          ---- TASKS ----
          
-         Start time: 9:41  ,  duration: 1 hr, Deadline: 10:41
-         1) Clean up all code
-         2) Check in
-         3) Look at Todos
+         Start time: 11:41  ,  duration: 1 hr, Deadline: 12:11
+         1) Fix problem with object disposal on user disconnect
+         2) Look at Todos
          (MAYBE)    4) Look at Lifecycle of update/broadcast of options
          
          */
@@ -283,6 +282,7 @@ namespace SignalRChat
             if (item != null)
             {
                 var id = Context.ConnectionId;
+                ConnectedUsers.Remove(item);
                 Clients.All.onUserDisconnected(id, item.UserName);
 
                 foreach (Group group in GroupList)
@@ -304,7 +304,6 @@ namespace SignalRChat
             //TODO: put this into Group method
             //is it the 'end of the session', if so then flush objects
             if (ConnectedUsers.Count == 0) {
-
                 //CurrentMessage.Dispose();
                 CurrentMessage.Clear();
                 GroupList.Clear();
