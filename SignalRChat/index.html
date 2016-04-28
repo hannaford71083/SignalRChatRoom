@@ -337,6 +337,12 @@
             canvasGame();
         }
 
+
+        chatHub.client.updateCountdown = function (time) {
+            game.countdownTime = parseInt(time);
+            console.log("---> game.countdownTime : ", game.countdownTime);
+        }
+
         chatHub.client.updateGame = function (outputIn) {
             var output = JSON.parse(outputIn);
             for(i in game.players) {
@@ -609,14 +615,7 @@
         
         //For initial startoff countdown and stopwatch
         function countdown() {
-            if (game.countdownTime == 5) {
-                //send message to server
-                chatHub.server.StartCountdown();
-
-                game.countdownTime--;
-            }
-
-
+            
             var caption;
 
             //currently based on refresh rate / sec - update using server function
@@ -631,7 +630,7 @@
             //remove below
             //game.timerTime--;
         }
-
+        
         function stopWatchUpdate() {
             var caption = "";
             game.timerlock = false;

@@ -36,7 +36,7 @@ namespace SignalRChat
 
         // use this here :  http://www.asp.net/signalr/overview/getting-started/tutorial-high-frequency-realtime-with-signalr
         // use [JsonProperty("left")] in classes (see link)
-        static BlockingCollection<Dictionary<string, GameGroup>> GameGroups = new BlockingCollection<Dictionary<string, GameGroup>>(); 
+        static ConcurrentDictionary<string, GameGroup> GameGroups = new ConcurrentDictionary<string, GameGroup>(); 
 
 
         private  System.Timers.Timer _countdownTimerLoop;
@@ -221,39 +221,47 @@ namespace SignalRChat
             } 
 
             //if isReady send message to users in group.
-            if (isReady) {  
-                Clients.Group(groupID).showGameScreen();
-                this.StartCountdown(groupID);    
+            if (isReady) {
+                this.initGame(groupID);
             }            
         }
 
+        
+        private void initGame(string groupID) {
+            //loop through players group
+            GameGroup newGroup = new GameGroup(groupID);
+            foreach (UserDetail user in GroupList.FirstOrDefault(o => o.id == groupID).users) {
+                PlayerState playerState = new PlayerState();
+                playerState.id = user.ConnectionId;
+                newGroup.PlayerStates.TryAdd(user.ConnectionId, playerState);
+            }
+            GameGroups.TryAdd(groupID, newGroup);
 
-        /*
-         Start Countdown
-         1) Server: initilise with counterTime = 4
-         2) Server: Timer will invoke DownloadCountdown every sec
-         
-         3) 
-         
-         *) Server: will send current counterTime for all users in specific groups
-         *) Server: after timer sent 0, dispose of timer 
-         
-         */ 
+            Clients.Group(groupID).showGameScreen();
+
+            GameGroups[groupID].StartCountdown(this);
+            //this.StartCountdown(groupID, this1);
+
+            //updateCountdown(5); 
+        }
+
 
 
         public void StartCountdown(string groupID) {
 
+            //GameGroups[groupID].
+            
             /* 
              * Broadcast timing to all groups 
-             * 
              */
 
             //int timeCounter
 
-            Debug.WriteLine("Countdown() started");
-            _countdownTimerLoop = new System.Timers.Timer(1000);
-            _countdownTimerLoop.Elapsed += new ElapsedEventHandler(DownloadCountdown);
-            _countdownTimerLoop.Enabled = true; // Enable it
+            //Debug.WriteLine("Countdown() started");
+            //_countdownTimerLoop = new System.Timers.Timer(1000);
+            //_countdownTimerLoop.Elapsed += new ElapsedEventHandler(DownloadCountdown);
+            //_countdownTimerLoop.Enabled = true; // Enable it
+            
         }
 
         //Timer Method - see above

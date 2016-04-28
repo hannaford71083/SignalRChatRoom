@@ -237,9 +237,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChatHub.cs" />
+    <Compile Include="Common\GameGroup.cs" />
     <Compile Include="Common\Group.cs" />
     <Compile Include="Common\HubBlockingCollection.cs" />
     <Compile Include="Common\MessageDetail.cs" />
+    <Compile Include="Common\PlayerState.cs" />
     <Compile Include="Common\UserDetail.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
