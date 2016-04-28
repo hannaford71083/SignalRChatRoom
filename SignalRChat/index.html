@@ -66,11 +66,6 @@
     function Program() {
         this.groups = {};
         this.currentUser;
-        this.screenUpdateMs = 50;   // TODO: in game object???   // screen update frequency in MS
-        this.uploadUpdateMS = 100;  // TODO: in game object???
-        this.timerTime = 200; 
-        this.stopWatch = 0;         // TODO: in game object???
-        this.timerlock = true;      // TODO: in game object???
         this.currentPage = "login";
     }
 
@@ -203,6 +198,7 @@
         // Calls when user successfully logged in
         chatHub.client.onConnected = function (id, userName, allUsers, messages) {
             console.log("id : ", id, ",  userName : ", userName, " , allUsers :  ", allUsers, " ,  messages : ", messages);
+
             // ----- INITIALISE -----
             program = new Program();
             user = new User(); 
@@ -255,7 +251,7 @@
             console.log("groupInfoArray - conversion to json", groupInfoArray); 
             for (i in groupInfoArray){ //loop groups
                 for (j in groupInfoArray[i].users) { //loop users in group
-                    var adminId = groupInfoArray[i].users[0].ConnectionId; // first person in group is admin
+                    var adminId = groupInfoArray[i].adminId;
                     var userId = groupInfoArray[i].users[j].ConnectionId;
                     var userName = groupInfoArray[i].users[j].UserName;
                     var isGroupAdmin = false;
@@ -273,18 +269,33 @@
                     }
                     else {
                         //only show if there the user is the admin of the group i.e. index = 0
-                        if (j == 0) {
+
+                        //are we in adminID loop iteration
+                        if (adminId == userId) {
                             $("#" + userId).find(".join").show();
                         }
-                            
+
+
+                        //are we dealing with this user in this loop iteration     
                         if (user.id == userId) {
+
+                            //save index, also make sure is done by value not reference
                             var jj = j;
+                            
+                            //set cachedIndex which is used in the game to rember this is the correct index for this group                      
                             group.cachedIndex = jj;
+
+                            //sets values on the this group (info for this user)
                             group.id = groupInfoArray[i].id;
                             group.object = groupInfoArray[i];
+
+                            //shows that user has joined this group
                             $("#" + adminId).find(".join").hide();
                             $("#" + adminId).find(".joined").show();
+
                         }
+
+
                     }
 
                 }
@@ -316,6 +327,10 @@
                 $(".waiting").show();
             });
         }
+
+
+
+        // ----- GAME FUNCTIONS -----
 
         chatHub.client.showGameScreen = function () {
             setScreen("game");
@@ -484,6 +499,14 @@
             this.players = [];
             this.startPixelX = 50;
             this.finishPosition = [];
+
+            this.screenUpdateMs = 50;   
+            this.uploadUpdateMS = 100;  
+            this.timerTime = 200; //TODO : remove after sountdownTimer function implemented
+            this.countdownTime = 5;
+
+            this.stopWatch = 0;        
+            this.timerlock = true;      
         }
 
         function Player(inName, inId) {
@@ -492,6 +515,7 @@
             this.canvasObject;
             this.distancePresses = 0;
             this.raceComplete = false;
+            this.cachedIndex;
             this.increment = function () {
                 if (this.raceComplete) { return; }
                 this.distancePresses++;
@@ -559,7 +583,7 @@
 
         draw();
 	        
-        setInterval(uploadData, program.uploadUpdateMS);
+        setInterval(uploadData, game.uploadUpdateMS);
 
 
         // -----------  GAME FUNCTIONS ----------- 
@@ -568,30 +592,53 @@
         var index = 0;
         document.body.addEventListener('keydown', function (e) {
             //player_keys
-            if (e.keyCode == player_keys[index] && !program.timerlock) {
+            if (e.keyCode == player_keys[index] && !game.timerlock) {
                 game.players[group.cachedIndex].increment(); //increment distance
                 index = changeI(index);
             }
         });
 
 
+        function uploadData() {   //string groupId, string playerId, string presses
+            if (program.currentPage != "game") { return; }
+            chatHub.server.uploadData(group.id, user.id, game.players[group.cachedIndex].distancePresses);
+        }
+
+
+
+        
         //For initial startoff countdown and stopwatch
         function countdown() {
+            if (game.countdownTime == 5) {
+                //send message to server
+                chatHub.server.StartCountdown();
+
+                game.countdownTime--;
+            }
+
+
             var caption;
-            caption = Math.ceil(program.timerTime / 50) + "";
+
+            //currently based on refresh rate / sec - update using server function
+            //caption = Math.ceil(game.timerTime / 50) + "";
+            caption = game.countdownTime.toString();
+
+            //leave this
             c.fillStyle = '#FFF';
             c.font = "120px LCD";
             c.fillText(caption, 500, 470);
-            program.timerTime--;
+
+            //remove below
+            //game.timerTime--;
         }
 
         function stopWatchUpdate() {
             var caption = "";
-            program.timerlock = false;
+            game.timerlock = false;
             c.font = "50px LCD";
-            c.fillText((program.stopWatch / 50), 450, 790);
+            c.fillText((game.stopWatch / 50), 450, 790);
             //console.log("program.stopWatch / 50 : "+ program.stopWatch );
-            program.stopWatch++;
+            game.stopWatch++;
         }
 
 
@@ -603,7 +650,7 @@
             preperationTasks();
             generatedStatic();
             if (program.currentPage == "game") {
-                if (program.timerTime <= 0) {
+                if (game.timerTime <= 0) {
                     stopWatchUpdate();
                 }
                 else {
@@ -611,7 +658,8 @@
                 }
             }
             drawImgs();
-            setTimeout(draw, program.screenUpdateMs );
+            
+            setTimeout(draw, game.screenUpdateMs);
         }
 		
         //TODO: refactor this? as want to keep objects separate
@@ -624,7 +672,7 @@
                 //check if the race is finished
                 if (game.players[i].distancePresses > game.totalPresses && game.players[i].raceComplete == false ) {
                     game.players[i].raceComplete = true;
-                    game.finishPosition.push({name : game.players[i].name, time: (program.stopWatch / 50) });
+                    game.finishPosition.push({name : game.players[i].name, time: (game.stopWatch / 50) });
                     if (game.finishPosition.length >= game.players.length) {
                         var html = "<table>";
                         html += "<tr><th>POSITION</th><th>NAME</th><th>TIME</th></tr>"; //
@@ -640,10 +688,7 @@
             }
         }
   
-        function uploadData() {   //string groupId, string playerId, string presses
-            if (program.currentPage != "game") { return; }
-            chatHub.server.uploadData(group.id, user.id, game.players[group.cachedIndex].distancePresses );
-        }
+
 
         function drawImgs(){
             //iterate array and draw each image
@@ -790,42 +835,42 @@
                 
             var caption;
 
-            //if (program.timerTime <= 0) {
+            //if (game.timerTime <= 0) {
             //    caption = "";
-            //    program.timerlock = false;
+            //    game.timerlock = false;
             //    c.font = "50px LCD";
 
 
             //    //need to get time at start of game
             //    //need to check 
 
-            //    c.fillText((program.stopWatch / 50), 450, 790);
+            //    c.fillText((game.stopWatch / 50), 450, 790);
 
-            //    console.log("program.stopWatch / 50 : "+ program.stopWatch );
+            //    console.log("game.stopWatch / 50 : "+ game.stopWatch );
 
-            //    program.stopWatch++;
+            //    game.stopWatch++;
             //}
             //else {
                     
             //}
 
-            caption = Math.ceil(program.timerTime / 50) + "";
+            caption = Math.ceil(game.timerTime / 50) + "";
 
             c.fillStyle = '#FFF';
             c.font = "120px LCD";
             c.fillText(caption, 500, 470);
 
-            program.timerTime--;
+            game.timerTime--;
         }
 
         function stopWatchUpdate() {
             var caption = "";
-            program.timerlock = false;
+            game.timerlock = false;
             c.font = "50px LCD";
             //need to get time at start of game
             //need to check 
-            c.fillText((program.stopWatch / 50), 450, 790);
-            //console.log("program.stopWatch / 50 : "+ program.stopWatch );
+            c.fillText((game.stopWatch / 50), 450, 790);
+            //console.log("game.stopWatch / 50 : "+ program.stopWatch );
             program.stopWatch++;
 
         }

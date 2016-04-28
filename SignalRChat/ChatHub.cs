@@ -25,7 +25,6 @@ namespace SignalRChat
          ---- TASKS ----
          
          Start time: 11:41  ,  duration: 1 hr, Deadline: 12:11
-         1) Fix problem with object disposal on user disconnect
          2) Look at Todos
          (MAYBE)    4) Look at Lifecycle of update/broadcast of options
          
@@ -34,6 +33,11 @@ namespace SignalRChat
         static List<UserDetail> ConnectedUsers = new List<UserDetail>(); //If no constructor will default to ConcurrentQueue<T>
         static List<MessageDetail> CurrentMessage = new List<MessageDetail>();
         static List<Group> GroupList = new List<Group>();
+
+        // use this here :  http://www.asp.net/signalr/overview/getting-started/tutorial-high-frequency-realtime-with-signalr
+        // use [JsonProperty("left")] in classes (see link)
+        static BlockingCollection<Dictionary<string, GameGroup>> GameGroups = new BlockingCollection<Dictionary<string, GameGroup>>(); 
+
 
         private  System.Timers.Timer _countdownTimerLoop;
 
@@ -47,11 +51,14 @@ namespace SignalRChat
 
         public void Connect(string userName)
         {
+            DateTime rightNow = new DateTime();
+            rightNow = DateTime.Now;
+
             //Init Trace for logging
             Debug.Listeners.Add(new TextWriterTraceListener(Console.Out));
-            Debug.WriteLine("ChatHub - Connect()");
-            var id = Context.ConnectionId;
+            Debug.WriteLine("ChatHub - Connect() at {0}", rightNow);
 
+            var id = Context.ConnectionId;
             if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
             {
                 ConnectedUsers.Add(new UserDetail { ConnectionId = id, UserName = userName });
@@ -216,13 +223,34 @@ namespace SignalRChat
             //if isReady send message to users in group.
             if (isReady) {  
                 Clients.Group(groupID).showGameScreen();
-                this.StartCountdown();    
+                this.StartCountdown(groupID);    
             }            
         }
 
 
+        /*
+         Start Countdown
+         1) Server: initilise with counterTime = 4
+         2) Server: Timer will invoke DownloadCountdown every sec
+         
+         3) 
+         
+         *) Server: will send current counterTime for all users in specific groups
+         *) Server: after timer sent 0, dispose of timer 
+         
+         */ 
 
-        public void StartCountdown() {
+
+        public void StartCountdown(string groupID) {
+
+            /* 
+             * Broadcast timing to all groups 
+             * 
+             */
+
+            //int timeCounter
+
+            Debug.WriteLine("Countdown() started");
             _countdownTimerLoop = new System.Timers.Timer(1000);
             _countdownTimerLoop.Elapsed += new ElapsedEventHandler(DownloadCountdown);
             _countdownTimerLoop.Enabled = true; // Enable it

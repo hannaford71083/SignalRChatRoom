@@ -61,6 +61,10 @@ namespace SignalRChat.Common
             foreach (UserDetail user in this.users)
                 user.SentLatest = false;
         }
+
+
+
+
         
     }
 }
