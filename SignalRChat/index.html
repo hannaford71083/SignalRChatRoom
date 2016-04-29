@@ -337,24 +337,32 @@
             canvasGame();
         }
 
-
         chatHub.client.updateCountdown = function (time) {
             game.countdownTime = parseInt(time);
-            console.log("---> game.countdownTime : ", game.countdownTime);
         }
+
+        chatHub.client.stopGameInterupt = function (playerFinishedObject) {
+            checkEndGame(playerFinishedObject)
+        }
+        
 
         chatHub.client.updateGame = function (outputIn) {
             var output = JSON.parse(outputIn);
+            //console.log("DOWN : ", output);
+
             for(i in game.players) {
-                if (i != game.cachedIndex) {
+                //if (i != game.cachedIndex) {
                     var pressesFromServers = output.users[i].KeyPresses;
                     if (game.players[i].distancePresses < pressesFromServers) {
 
                         game.players[i].distancePresses = pressesFromServers;
                     }
-                }
+                //}
             }
+
         }
+
+
 
     } //registerClientMethods()
 
@@ -503,16 +511,18 @@
             this.trackDistancePixels = 800; //calculated
             this.speedRefreshPerSec = 10;
             this.players = [];
+            this.thisPlayer = {};
             this.startPixelX = 50;
             this.finishPosition = [];
 
             this.screenUpdateMs = 50;   
-            this.uploadUpdateMS = 100;  
+            this.uploadUpdateMS = 500;  
             this.timerTime = 200; //TODO : remove after sountdownTimer function implemented
             this.countdownTime = 5;
 
             this.stopWatch = 0;        
-            this.timerlock = true;      
+            this.timerlock = true;
+            this.startTime;
         }
 
         function Player(inName, inId) {
@@ -521,7 +531,7 @@
             this.canvasObject;
             this.distancePresses = 0;
             this.raceComplete = false;
-            this.cachedIndex;
+
             this.increment = function () {
                 if (this.raceComplete) { return; }
                 this.distancePresses++;
@@ -581,15 +591,30 @@
         // update other players 
         game = new GameObject(); //singleton - dont make anoter!
         var yCoords = [260, 390, 520, 650];
+
+        
         for (i in group.object.users) { //testobject.users
+            if (group.object.users[i].ConnectionId == user.id) {
+                var player = new Player(group.object.users[i].UserName, group.object.users[i].ConnectionId);
+                game.thisPlayer = player;
+            }
             var player = new Player(group.object.users[i].UserName, group.object.users[i].ConnectionId);
             player.canvasObject = new canvasObj( game.startPixelX , yCoords[i], 125, 125, 'Images/pixel-runner.png');
             game.players.push(player);
         }
 
+        //Will update periodicly based on this.screenUpdateMs & this.uploadUpdateMS e.g =1000
         draw();
-	        
-        setInterval(uploadData, game.uploadUpdateMS);
+        uploadData();
+       
+
+        /*
+        Refactor Objects - to use only s this.Player object on client and update only from server 
+
+        */
+
+
+
 
 
         // -----------  GAME FUNCTIONS ----------- 
@@ -599,15 +624,22 @@
         document.body.addEventListener('keydown', function (e) {
             //player_keys
             if (e.keyCode == player_keys[index] && !game.timerlock) {
-                game.players[group.cachedIndex].increment(); //increment distance
+                //game.players[group.cachedIndex].increment(); //increment distance
+                game.thisPlayer.increment();
                 index = changeI(index);
             }
         });
 
+        function changeI(index) {
+            return a = index == 0 ? 1 : 0;
+        }
 
         function uploadData() {   //string groupId, string playerId, string presses
             if (program.currentPage != "game") { return; }
-            chatHub.server.uploadData(group.id, user.id, game.players[group.cachedIndex].distancePresses);
+            //console.log("UP   : ", game.players[group.cachedIndex].distancePresses);
+            //chatHub.server.uploadData(group.id, user.id, game.players[group.cachedIndex].distancePresses);
+            chatHub.server.uploadData(group.id, user.id, game.thisPlayer.distancePresses);
+            setTimeout(uploadData, game.uploadUpdateMS);
         }
 
 
@@ -615,29 +647,27 @@
         
         //For initial startoff countdown and stopwatch
         function countdown() {
-            
-            var caption;
-
-            //currently based on refresh rate / sec - update using server function
-            //caption = Math.ceil(game.timerTime / 50) + "";
-            caption = game.countdownTime.toString();
-
+            var caption = game.countdownTime.toString(); //countdownTime updated from server
             //leave this
             c.fillStyle = '#FFF';
             c.font = "120px LCD";
             c.fillText(caption, 500, 470);
-
-            //remove below
-            //game.timerTime--;
         }
         
         function stopWatchUpdate() {
-            var caption = "";
-            game.timerlock = false;
+            if (game.timerlock) {
+                game.timerlock = false;
+                this.startTime = new Date();
+            }
+            //stop watch needs to be ran according to clients system clock 
+            var dateTimeMS = new Date();
+            var msSinceStart = dateTimeMS - this.startTime;
+            //var msCurrent = this.startTime - 0;
+            //console.log("MS since start", msSinceStart, "  V  Old time: ", oldTiming, ",                    Absolute Time MS : ", msCurrent);
             c.font = "50px LCD";
-            c.fillText((game.stopWatch / 50), 450, 790);
-            //console.log("program.stopWatch / 50 : "+ program.stopWatch );
-            game.stopWatch++;
+            //c.fillText((game.stopWatch / 50), 450, 790);
+            c.fillText((msSinceStart / 1000).toFixed(1).toString(), 450, 790);
+            //game.stopWatch++;
         }
 
 
@@ -648,8 +678,9 @@
             c.fillRect(0, 0, canvas.width, canvas.height);
             preperationTasks();
             generatedStatic();
+            //console.log(game.timerTime);
             if (program.currentPage == "game") {
-                if (game.timerTime <= 0) {
+                if (game.countdownTime <= 0) {
                     stopWatchUpdate();
                 }
                 else {
@@ -664,29 +695,53 @@
         //TODO: refactor this? as want to keep objects separate
         function preperationTasks() {
             for (i in game.players) {
+
                 //update canvas with presses position
                 var addDistance = game.trackDistancePixels / (game.totalPresses / game.players[i].distancePresses);
                 newDistance = game.players[i].canvasObject.x + addDistance;
                 game.players[i].canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
-                //check if the race is finished
-                if (game.players[i].distancePresses > game.totalPresses && game.players[i].raceComplete == false ) {
-                    game.players[i].raceComplete = true;
-                    game.finishPosition.push({name : game.players[i].name, time: (game.stopWatch / 50) });
-                    if (game.finishPosition.length >= game.players.length) {
-                        var html = "<table>";
-                        html += "<tr><th>POSITION</th><th>NAME</th><th>TIME</th></tr>"; //
-                        for (j in game.finishPosition) {
-                            var pos = parseInt(j) + 1;
-                            html += "<tr><td>" + pos + "</td><td>" + game.finishPosition[j].name + "</td><td>" + game.finishPosition[j].time + "</td></tr>";
-                        }
-                        html += "</table>"
-                        $(".resultsContainer").html(html);
-                        setScreen("results");
-                    }
-                }
+            }
+            
+
+            //check thisPlayer to see if achieved endgame
+            //REFACTOR THIS!!!
+
+            //check if the race is finished
+            if (game.thisPlayer.distancePresses > game.totalPresses && game.thisPlayer.raceComplete == false ) {
+                game.thisPlayer.raceComplete = true;
+                var dateTimeMS = new Date();
+                var msSinceStart = dateTimeMS - this.startTime;
+                var secsTotal = (msSinceStart / 1000).toFixed(1);
+                var playerFinishPositionObj = { name: game.players[i].name, time: secsTotal };
+                chatHub.server.endGame(group.id, playerFinishPositionObj);
+                console.log("UP : ", playerFinishPositionObj);
             }
         }
   
+
+
+        function checkEndGame(playerFinishedObjectIn) {
+            var playerFinishedObject = JSON.parse(playerFinishedObjectIn);
+            console.log("DOWN : ", playerFinishedObject);
+            game.finishPosition.push( playerFinishedObject); //{ name: game.players[i].name, time: secsTotal }
+
+            if (game.finishPosition.length >= game.players.length) {
+                var html = "<table>";
+                html += "<tr><th>POSITION</th><th>NAME</th><th>TIME</th></tr>"; //
+                for (j in game.finishPosition) {
+                    var pos = parseInt(j) + 1;
+                    html += "<tr><td>" + pos + "</td><td>" + game.finishPosition[j].name + "</td><td>" + game.finishPosition[j].time + "</td></tr>";
+                }
+                html += "</table>"
+                $(".resultsContainer").html(html);
+                chatHub.server.endGame(group.id);
+                setScreen("results");
+            }
+
+
+            //setScreen("results");
+        }
+
 
 
         function drawImgs(){
@@ -713,9 +768,7 @@
             }
         }
 
-        function changeI(index) {
-            return a = index == 0 ? 1 : 0;
-        }
+        
 
 
     }// ---- END CanvasGame() ----

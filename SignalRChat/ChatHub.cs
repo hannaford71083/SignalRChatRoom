@@ -36,10 +36,11 @@ namespace SignalRChat
 
         // use this here :  http://www.asp.net/signalr/overview/getting-started/tutorial-high-frequency-realtime-with-signalr
         // use [JsonProperty("left")] in classes (see link)
-        static ConcurrentDictionary<string, GameGroup> GameGroups = new ConcurrentDictionary<string, GameGroup>(); 
+        static ConcurrentDictionary<string, GameGroup> GameGroups = new ConcurrentDictionary<string, GameGroup>();
 
-
-        private  System.Timers.Timer _countdownTimerLoop;
+        //Static timer acts as Clock cycle for instances of Group countdown
+        static System.Timers.Timer CountdownTimerLoop = null;
+        static ConcurrentQueue<GameGroup> CountDownQueue = new ConcurrentQueue<GameGroup>();
 
         #endregion
 
@@ -65,6 +66,8 @@ namespace SignalRChat
                 Clients.Caller.onConnected(id, userName, ConnectedUsers, CurrentMessage); // send to caller
                 Clients.AllExcept(id).onNewUserConnected(id, userName); // send to all except caller client
             }
+
+            this.StartTimerLoop();
         }
 
 
@@ -222,12 +225,12 @@ namespace SignalRChat
 
             //if isReady send message to users in group.
             if (isReady) {
-                this.initGame(groupID);
+                this.InitGame(groupID);
             }            
         }
 
         
-        private void initGame(string groupID) {
+        private void InitGame(string groupID) {
             //loop through players group
             GameGroup newGroup = new GameGroup(groupID);
             foreach (UserDetail user in GroupList.FirstOrDefault(o => o.id == groupID).users) {
@@ -236,44 +239,51 @@ namespace SignalRChat
                 newGroup.PlayerStates.TryAdd(user.ConnectionId, playerState);
             }
             GameGroups.TryAdd(groupID, newGroup);
-
             Clients.Group(groupID).showGameScreen();
+            this.StartCountDown(GameGroups[groupID]);
+        }
 
-            GameGroups[groupID].StartCountdown(this);
-            //this.StartCountdown(groupID, this1);
-
-            //updateCountdown(5); 
+        private void StartCountDown(GameGroup gg) {
+            while(!CountDownQueue.Contains(gg)) {
+                CountDownQueue.Enqueue(gg);            
+            }
         }
 
 
-
-        public void StartCountdown(string groupID) {
-
-            //GameGroups[groupID].
-            
-            /* 
-             * Broadcast timing to all groups 
-             */
-
-            //int timeCounter
-
-            //Debug.WriteLine("Countdown() started");
-            //_countdownTimerLoop = new System.Timers.Timer(1000);
-            //_countdownTimerLoop.Elapsed += new ElapsedEventHandler(DownloadCountdown);
-            //_countdownTimerLoop.Enabled = true; // Enable it
-            
+        /// <summary>
+        /// Timer Loop for the 'Countdown' process to start race hardcoded to run every 1000ms, could be refactored to be something that could run x times every second
+        ///     this could be useful in order to stagger starting times, or for the pushing of data to users.
+        /// </summary>
+ 
+        private void StartTimerLoop(){
+            //initialise only one timer loop, like a Singleton pattern :¬D
+            if (CountdownTimerLoop == null)
+            {
+                Debug.WriteLine("CREATING TIMER");
+                CountdownTimerLoop = new System.Timers.Timer(1000);
+                CountdownTimerLoop.Elapsed += (sender, e) => CountDownLoopExecute(sender, e, this);
+                CountdownTimerLoop.Enabled = true; // Enable it
+            }
+            else
+            {
+                Debug.WriteLine("TIMER ALREADY EXISTS");  
+            }
         }
 
-        //Timer Method - see above
-        static void DownloadCountdown(object sender, ElapsedEventArgs e)
+        //loops through all groups, sends update times to affected groups
+        private static void CountDownLoopExecute(object sender, ElapsedEventArgs e, ChatHub ch)
         {
-            //TODO : WE either use a single thread that will fire every 10th of a second, and will e.g. implement countdown every 10 itereations!       
-                // OR Look into multithreading what do we need here
-
-            // System.Console.WriteLine(_countdownTimerLoop.ToString());
-            var a = e;
-            //Clients.Group(groupID).showSplash();
+            Debug.WriteLine("Countdown Execute - length is " + CountDownQueue.Count);
+            foreach (GameGroup gameGroup in CountDownQueue) { 
+                gameGroup.DecrementTimer();
+                ch.Clients.Group(gameGroup.id).updateCountdown(gameGroup.countdownTime); 
+                if (gameGroup.countdownTime <= 0) { //if timer = 0 then dequeue this group
+                    GameGroup gg;
+                    CountDownQueue.TryDequeue(out gg);
+                }
+            }
         }
+
 
 
 
@@ -306,8 +316,9 @@ namespace SignalRChat
         }
 
 
-        
-
+        public void EndGame(string groupId, string finishObject){
+            Clients.Group(groupId).stopGameInterupt(finishObject);
+        }
        
 
 
@@ -317,36 +328,48 @@ namespace SignalRChat
             var item = ConnectedUsers.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
             if (item != null)
             {
-                var id = Context.ConnectionId;
-                ConnectedUsers.Remove(item);
-                Clients.All.onUserDisconnected(id, item.UserName);
+                while (ConnectedUsers.Contains(item)) { 
+                    var id = Context.ConnectionId;
+                    ConnectedUsers.Remove(item);
+                    Clients.All.onUserDisconnected(id, item.UserName);
 
-                foreach (Group group in GroupList)
-                {
-                    if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null)
+                    foreach (Group group in GroupList)
                     {
-                        group.removeUserwithId(id); //TODO: REFACTOR LATER - NOT THREAD SAFE
+                        if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null)
+                        {
+                            group.removeUserwithId(id); //TODO: REFACTOR LATER - NOT THREAD SAFE
+                        }
                     }
                 }
-
                 UpdateClientGroups();
-
                 // << REMOVED CONTENT SEE BOTTOM >>
-
-
             }
-
-
-            //TODO: put this into Group method
             //is it the 'end of the session', if so then flush objects
             if (ConnectedUsers.Count == 0) {
-                //CurrentMessage.Dispose();
-                CurrentMessage.Clear();
-                GroupList.Clear();
+                this.GarbagCollect();
             }
-
             return base.OnDisconnected(stopCalled); 
         }
+
+
+        private void GarbagCollect() {
+            //CurrentMessage.Dispose();
+            CurrentMessage.Clear();
+            GroupList.Clear();
+            
+            //Clear Queue if reinstatiating
+            while (!CountDownQueue.IsEmpty)
+            {
+                GameGroup gg;
+                CountDownQueue.TryDequeue(out gg);
+            }
+
+            //stop/dispose timer
+            //CountdownTimerLoop.Stop();
+            CountdownTimerLoop.Dispose();
+            CountdownTimerLoop = null;
+        }
+
 
 
         //<< STATIC FUNCITONS WHERE HERE >>
