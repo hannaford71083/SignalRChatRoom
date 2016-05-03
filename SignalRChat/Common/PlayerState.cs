@@ -9,7 +9,7 @@ namespace SignalRChat.Common
     {
         public string id;
         public int clicks;
-
+        public int timeInMS;
     }
 
 }

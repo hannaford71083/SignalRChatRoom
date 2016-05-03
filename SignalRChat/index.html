@@ -530,8 +530,16 @@
             this.id = inId;
             this.canvasObject;
             this.distancePresses = 0;
-            this.raceComplete = false;
 
+            //TODO: refactor to put all synced info in here i.e. this.distancePresses 
+            this.syncObject = {
+                "userId": inId,
+                "groupId": group.id, 
+                "distancePresses": 0,
+                "finishTimeMs": 0,
+            }
+
+            
             this.increment = function () {
                 if (this.raceComplete) { return; }
                 this.distancePresses++;
@@ -701,20 +709,20 @@
                 newDistance = game.players[i].canvasObject.x + addDistance;
                 game.players[i].canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
             }
-            
 
             //check thisPlayer to see if achieved endgame
             //REFACTOR THIS!!!
 
             //check if the race is finished
-            if (game.thisPlayer.distancePresses > game.totalPresses && game.thisPlayer.raceComplete == false ) {
-                game.thisPlayer.raceComplete = true;
+            if (game.thisPlayer.distancePresses > game.totalPresses  ) {  //&& game.thisPlayer.raceComplete == false
+                //game.thisPlayer.raceComplete = true;
                 var dateTimeMS = new Date();
                 var msSinceStart = dateTimeMS - this.startTime;
-                var secsTotal = (msSinceStart / 1000).toFixed(1);
-                var playerFinishPositionObj = { name: game.players[i].name, time: secsTotal };
-                chatHub.server.endGame(group.id, playerFinishPositionObj);
-                console.log("UP : ", playerFinishPositionObj);
+                //var secsTotal = (msSinceStart / 1000).toFixed(1);
+                //var playerFinishPositionObj = { name: game.players[i].name, time: secsTotal };
+                //chatHub.server.endGame(group.id, playerFinishPositionObj);
+                chatHub.server.endGame(player.id,  group.id , msSinceStart)
+                //console.log("UP : ", playerFinishPositionObj);
             }
         }
   

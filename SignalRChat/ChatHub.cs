@@ -316,8 +316,19 @@ namespace SignalRChat
         }
 
 
-        public void EndGame(string groupId, string finishObject){
-            Clients.Group(groupId).stopGameInterupt(finishObject);
+        public void EndGame(string playerId,  string groupId, int finishTimeMS)
+        {
+            //Clients.Group(groupId).stopGameInterupt(finishObject);
+
+            //1) find group
+
+            //2) Find player in group
+
+            //3) Add Finish time
+
+            //4) check group has finished
+
+
         }
        
 
