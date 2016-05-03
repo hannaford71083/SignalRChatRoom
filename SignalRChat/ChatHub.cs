@@ -11,6 +11,7 @@ using Microsoft.AspNet.SignalR.Hubs;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using Newtonsoft.Json;
 //using System.Threading;
 
 
@@ -21,21 +22,13 @@ namespace SignalRChat
     {
         #region Data Members
 
-        /*
-         ---- TASKS ----
-         
-         Start time: 11:41  ,  duration: 1 hr, Deadline: 12:11
-         2) Look at Todos
-         (MAYBE)    4) Look at Lifecycle of update/broadcast of options
-         
-         */
 
         static List<UserDetail> ConnectedUsers = new List<UserDetail>(); //If no constructor will default to ConcurrentQueue<T>
         static List<MessageDetail> CurrentMessage = new List<MessageDetail>();
         static List<Group> GroupList = new List<Group>();
 
         // use this here :  http://www.asp.net/signalr/overview/getting-started/tutorial-high-frequency-realtime-with-signalr
-        // use [JsonProperty("left")] in classes (see link)
+
         static ConcurrentDictionary<string, GameGroup> GameGroups = new ConcurrentDictionary<string, GameGroup>();
 
         //Static timer acts as Clock cycle for instances of Group countdown
@@ -235,7 +228,7 @@ namespace SignalRChat
             GameGroup newGroup = new GameGroup(groupID);
             foreach (UserDetail user in GroupList.FirstOrDefault(o => o.id == groupID).users) {
                 PlayerState playerState = new PlayerState();
-                playerState.id = user.ConnectionId;
+                playerState.Id = user.ConnectionId;
                 newGroup.PlayerStates.TryAdd(user.ConnectionId, playerState);
             }
             GameGroups.TryAdd(groupID, newGroup);
@@ -286,38 +279,29 @@ namespace SignalRChat
 
 
 
-
-        public void UploadData(string groupId, string playerId, string presses )
+        //Uploads from Client, finds and updates current client, then sends update to group if has latest info
+        public void UploadData(PlayerState playerState)
         {
-            //deserialise
-            int keyPresses;
-            int.TryParse(presses, out keyPresses);
-            //add data for player
-            //have we got all uploads
-            var a = groupId;
-
-            //TODO - try/catch put here
-
-            //find group, find player   //TODO : Make users group thread safe
-            GroupList.FirstOrDefault(o => o.id == groupId)
-                .users.FirstOrDefault(o => o.ConnectionId == playerId)
-                .updateKeyPresses(keyPresses);
-
-            if (GroupList.FirstOrDefault(o => o.id == groupId).isDownloadReady())
-            {
-                //update position
-                JavaScriptSerializer jss = new JavaScriptSerializer();
-                string output = jss.Serialize(GroupList.FirstOrDefault(o => o.id == groupId));
-                Clients.Group(groupId).updateGame(output);
-
-                GroupList.FirstOrDefault(o => o.id == groupId).resetSents();
+            try { 
+                GameGroups[playerState.GroupId].PlayerStates[playerState.Id] = playerState; //TODO: Experiment - is this a lot quicker than just updating clicks property
+                if (GameGroups[playerState.GroupId].IsDownloadReady())
+                {
+                    Clients.Group(playerState.GroupId).updateGame(GameGroups[playerState.GroupId]); //sends group back to players in group
+                    GameGroups[playerState.GroupId].ResetSents();
+                }
             }
-            
+            catch (Exception e) {
+                Debug.WriteLine("UploadData() error, message: ", e.Message );
+            }
+
         }
 
 
-        public void EndGame(string playerId,  string groupId, int finishTimeMS)
+        public void EndGame(PlayerState playerState)
         {
+
+            var a = playerState;
+
             //Clients.Group(groupId).stopGameInterupt(finishObject);
 
             //1) find group
@@ -400,6 +384,10 @@ namespace SignalRChat
 
         #endregion
     }
+
+
+
+
 
 }
 

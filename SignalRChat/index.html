@@ -346,20 +346,15 @@
         }
         
 
-        chatHub.client.updateGame = function (outputIn) {
-            var output = JSON.parse(outputIn);
-            //console.log("DOWN : ", output);
 
-            for(i in game.players) {
-                //if (i != game.cachedIndex) {
-                    var pressesFromServers = output.users[i].KeyPresses;
-                    if (game.players[i].distancePresses < pressesFromServers) {
-
-                        game.players[i].distancePresses = pressesFromServers;
-                    }
-                //}
+        chatHub.client.updateGame = function (listOPlayers) {
+            //console.log(listOPlayers);
+            for (i in game.players) {
+                //var before = game.players[i].syncObject.distancePresses;
+                game.players[i].syncObject = listOPlayers.PlayerStates[game.players[i].id];
+                //var after = game.players[i].syncObject.distancePresses;
+                //console.log("id : ", game.players[i].id, ", Presses before : ", before, "  ,   after : ", after);
             }
-
         }
 
 
@@ -530,24 +525,31 @@
             this.id = inId;
             this.canvasObject;
             this.distancePresses = 0;
-
-            //TODO: refactor to put all synced info in here i.e. this.distancePresses 
-            this.syncObject = {
+            this.sentFinishedSignal = false;
+            this.syncObject = { //object synced with server
                 "userId": inId,
                 "groupId": group.id, 
                 "distancePresses": 0,
                 "finishTimeMs": 0,
             }
-
-            
             this.increment = function () {
-                if (this.raceComplete) { return; }
-                this.distancePresses++;
-                var addDistance = game.trackDistancePixels / (game.totalPresses / this.distancePresses);
-                newDistance = this.canvasObject.x + addDistance;
-                this.canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
+                if (this.hasFinishedRace()) { return; } //console.log("hasFinishedRace = TRUE");
+                this.syncObject.distancePresses++;
             }
-
+            this.hasFinishedRace = function () {
+                //console.log("syncObject.distancePresses : ", this.syncObject.distancePresses, " >   game.totalPresses :", game.totalPresses);
+                if (this.syncObject.distancePresses > game.totalPresses) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+                //return this.syncObject.distancePresses > game.totalPresses ? true : false;
+            }
+            this.hasSentFinished = function () {
+                //console.log("this.hasSentFinished : ", this.sentFinishedSignal);
+                return this.sentFinishedSignal;
+            }
         }
 
 
@@ -616,13 +618,6 @@
         uploadData();
        
 
-        /*
-        Refactor Objects - to use only s this.Player object on client and update only from server 
-
-        */
-
-
-
 
 
         // -----------  GAME FUNCTIONS ----------- 
@@ -642,14 +637,12 @@
             return a = index == 0 ? 1 : 0;
         }
 
-        function uploadData() {   //string groupId, string playerId, string presses
+        //upload 'syncObject' object to server 
+        function uploadData() {   
             if (program.currentPage != "game") { return; }
-            //console.log("UP   : ", game.players[group.cachedIndex].distancePresses);
-            //chatHub.server.uploadData(group.id, user.id, game.players[group.cachedIndex].distancePresses);
-            chatHub.server.uploadData(group.id, user.id, game.thisPlayer.distancePresses);
+            chatHub.server.uploadData(game.thisPlayer.syncObject);
             setTimeout(uploadData, game.uploadUpdateMS);
         }
-
 
 
         
@@ -670,12 +663,8 @@
             //stop watch needs to be ran according to clients system clock 
             var dateTimeMS = new Date();
             var msSinceStart = dateTimeMS - this.startTime;
-            //var msCurrent = this.startTime - 0;
-            //console.log("MS since start", msSinceStart, "  V  Old time: ", oldTiming, ",                    Absolute Time MS : ", msCurrent);
             c.font = "50px LCD";
-            //c.fillText((game.stopWatch / 50), 450, 790);
             c.fillText((msSinceStart / 1000).toFixed(1).toString(), 450, 790);
-            //game.stopWatch++;
         }
 
 
@@ -696,34 +685,33 @@
                 }
             }
             drawImgs();
-            
             setTimeout(draw, game.screenUpdateMs);
         }
 		
         //TODO: refactor this? as want to keep objects separate
         function preperationTasks() {
             for (i in game.players) {
-
                 //update canvas with presses position
-                var addDistance = game.trackDistancePixels / (game.totalPresses / game.players[i].distancePresses);
+                var addDistance = game.trackDistancePixels / (game.totalPresses / game.players[i].syncObject.distancePresses);
                 newDistance = game.players[i].canvasObject.x + addDistance;
                 game.players[i].canvasObject.x = game.startPixelX + addDistance; // 50 is start distance
             }
 
-            //check thisPlayer to see if achieved endgame
-            //REFACTOR THIS!!!
-
             //check if the race is finished
-            if (game.thisPlayer.distancePresses > game.totalPresses  ) {  //&& game.thisPlayer.raceComplete == false
-                //game.thisPlayer.raceComplete = true;
+            if (game.thisPlayer.hasFinishedRace() && !game.thisPlayer.hasSentFinished()) {  //&& game.thisPlayer.raceComplete == false
+
+                //CONTINUE HERE - Not working
+
+                console.log("***** SEND SIGNAL ********");
+                console.log("***** SEND SIGNAL ********");
+                console.log("***** SEND SIGNAL ********");
                 var dateTimeMS = new Date();
-                var msSinceStart = dateTimeMS - this.startTime;
-                //var secsTotal = (msSinceStart / 1000).toFixed(1);
-                //var playerFinishPositionObj = { name: game.players[i].name, time: secsTotal };
-                //chatHub.server.endGame(group.id, playerFinishPositionObj);
-                chatHub.server.endGame(player.id,  group.id , msSinceStart)
-                //console.log("UP : ", playerFinishPositionObj);
+                var msSinceStart = dateTimeMS - game.startTime; 
+                game.thisPlayer.syncObject.finishTimeMs = msSinceStart;
+                chatHub.server.endGame(game.thisPlayer.syncObject);
+                game.thisPlayer.sentFinishedSignal = true;
             }
+
         }
   
 

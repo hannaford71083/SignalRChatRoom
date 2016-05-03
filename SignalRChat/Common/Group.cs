@@ -23,6 +23,7 @@ namespace SignalRChat.Common
 
         public List<UserDetail> users = new List<UserDetail>();
 
+
         public void addUserDetail(UserDetail userDetail ) {
             
             users.Add(userDetail);
