@@ -200,7 +200,7 @@ namespace SignalRChat
         }
 
 
-
+        // *TS: MEDIUM
         public void PlayerReady(string playerId, string groupID)
         {
             //looks through all players in group, if all ready then go to next screen
@@ -217,25 +217,40 @@ namespace SignalRChat
             } 
 
             //if isReady send message to users in group.
-            if (isReady) {
+            if (isReady)
+            {
                 this.InitGame(groupID);
-            }            
+            }
+            
         }
 
-        
+        // *TS: DONE
         private void InitGame(string groupID) {
             //loop through players group
             GameGroup newGroup = new GameGroup(groupID);
+
+            bool failedAdd = false;
             foreach (UserDetail user in GroupList.FirstOrDefault(o => o.id == groupID).users) {
                 PlayerState playerState = new PlayerState();
                 playerState.Id = user.ConnectionId;
-                newGroup.PlayerStates.TryAdd(user.ConnectionId, playerState);
+                if (!newGroup.PlayerStates.TryAdd(user.ConnectionId, playerState)) { failedAdd = true; } //LOW threadsafe Risk, only one client inititates creation of group
             }
-            GameGroups.TryAdd(groupID, newGroup);
-            Clients.Group(groupID).showGameScreen();
-            this.StartCountDown(GameGroups[groupID]);
+
+            //What if not added initially, requires while loop?
+            if(!GameGroups.TryAdd(groupID, newGroup)){ failedAdd = true; } //MEDIUM threadsafe Risk
+            
+            if(failedAdd){
+                //TODO: Add ClientError() callback
+                Debug.WriteLine("Failed to Add Player to Group or Group to List");
+            }
+            else{
+                Clients.Group(groupID).showGameScreen();
+                this.StartCountDown(GameGroups[groupID]);
+            }
+            
         }
 
+        // *TS: DONE
         private void StartCountDown(GameGroup gg) {
             while(!CountDownQueue.Contains(gg)) {
                 CountDownQueue.Enqueue(gg);            
@@ -263,6 +278,7 @@ namespace SignalRChat
             }
         }
 
+        // *TS: TODO
         //loops through all groups, sends update times to affected groups
         private static void CountDownLoopExecute(object sender, ElapsedEventArgs e, ChatHub ch)
         {
@@ -282,12 +298,16 @@ namespace SignalRChat
         }
 
 
-
+        // *TS: TODO - VERY IMPORTANT
         //Uploads from Client, finds and updates current client, then sends update to group if has latest info
         public void UploadData(PlayerState playerState)
         {
             try { 
-                GameGroups[playerState.GroupId].PlayerStates[playerState.Id] = playerState; //TODO: Experiment - is this a lot quicker than just updating clicks property
+                //instead of adding whole object, add only the clicks using Interlock
+                //GameGroups[playerState.GroupId].PlayerStates[playerState.Id] = playerState; //TODO: Experiment - is this a lot quicker than just updating clicks property
+
+                GameGroups[playerState.GroupId].PlayerStates[playerState.Id].UpdateClicks(playerState);
+
                 if (GameGroups[playerState.GroupId].IsDownloadReady())
                 {
                     Clients.Group(playerState.GroupId).updateGame(GameGroups[playerState.GroupId]); //sends group back to players in group

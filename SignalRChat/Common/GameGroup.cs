@@ -39,10 +39,12 @@ namespace SignalRChat.Common
             return allready;
         }
 
+
         public void ResetSents() {
             foreach (var item in PlayerStates)
             {
-                PlayerStates[item.Key].SentLatestFlag = false;
+                PlayerStates[item.Key].resetSentLatestFlagToFalse();
+                //PlayerStates[item.Key].SentLatestFlag = false;
             }
         
         }
