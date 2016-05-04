@@ -266,7 +266,11 @@ namespace SignalRChat
         //loops through all groups, sends update times to affected groups
         private static void CountDownLoopExecute(object sender, ElapsedEventArgs e, ChatHub ch)
         {
-            Debug.WriteLine("Countdown Execute - length is " + CountDownQueue.Count);
+
+            if (CountDownQueue.Count > 0) {
+                Debug.WriteLine("Countdown Execute - length is " + CountDownQueue.Count);
+            }
+
             foreach (GameGroup gameGroup in CountDownQueue) { 
                 gameGroup.DecrementTimer();
                 ch.Clients.Group(gameGroup.id).updateCountdown(gameGroup.countdownTime); 
@@ -305,13 +309,33 @@ namespace SignalRChat
             //Clients.Group(groupId).stopGameInterupt(finishObject);
 
             //1) find group
-
             //2) Find player in group
-
             //3) Add Finish time
-
+            GameGroups[playerState.GroupId].PlayerStates[playerState.Id] = playerState;
+            
             //4) check group has finished
+            Debug.WriteLine("------- Loop -------");
+            bool areAllFinished = true;
+            foreach(var item in GameGroups[playerState.GroupId].PlayerStates.Keys)
+            {
+                int finishTime = GameGroups[playerState.GroupId].PlayerStates[item].FinishTimeMS;
+                if (finishTime <= 0 ) {
+                    areAllFinished = false;
+                }
+                Debug.WriteLine("finsihTime : " + finishTime);
+            }
 
+            if (areAllFinished) {
+
+                string cdsfds = "Peter piper picked a peck of pickled peppers";
+
+                var sortedList = GameGroups[playerState.GroupId].PlayerStates.OrderBy(kp => kp.Value.FinishTimeMS).ToList();
+
+                Debug.WriteLine("Send stop signal to all: ");
+                //Clients.Group(playerState.GroupId).clientEndGame(GameGroups[playerState.GroupId]);
+                Clients.Group(playerState.GroupId).clientEndGame(sortedList);
+
+            }
 
         }
        

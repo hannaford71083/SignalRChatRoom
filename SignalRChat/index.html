@@ -263,43 +263,28 @@
                         var membersObj = groupInfoArray[i].users;
                         $(".loginUser .members").data("membersObject", membersObj);
                         $(".loginUser .start").data("group-id", groupInfoArray[i].id);
-                        group.cachedIndex = 0;
                         group.id = groupInfoArray[i].id;
                         group.object = groupInfoArray[i];
                     }
                     else {
-                        //only show if there the user is the admin of the group i.e. index = 0
-
                         //are we in adminID loop iteration
                         if (adminId == userId) {
                             $("#" + userId).find(".join").show();
                         }
-
-
                         //are we dealing with this user in this loop iteration     
                         if (user.id == userId) {
-
-                            //save index, also make sure is done by value not reference
-                            var jj = j;
-                            
-                            //set cachedIndex which is used in the game to rember this is the correct index for this group                      
-                            group.cachedIndex = jj;
-
                             //sets values on the this group (info for this user)
                             group.id = groupInfoArray[i].id;
                             group.object = groupInfoArray[i];
-
                             //shows that user has joined this group
                             $("#" + adminId).find(".join").hide();
                             $("#" + adminId).find(".joined").show();
-
                         }
-
-
                     }
 
-                }
-            }
+                }//j
+            }//i
+
             updateAdminGroupDetails();
         }
 
@@ -341,19 +326,18 @@
             game.countdownTime = parseInt(time);
         }
 
-        chatHub.client.stopGameInterupt = function (playerFinishedObject) {
-            checkEndGame(playerFinishedObject)
+
+
+        chatHub.client.clientEndGame = function (listOPlayers) {
+            game.endGame(listOPlayers);
         }
         
 
 
+
         chatHub.client.updateGame = function (listOPlayers) {
-            //console.log(listOPlayers);
             for (i in game.players) {
-                //var before = game.players[i].syncObject.distancePresses;
                 game.players[i].syncObject = listOPlayers.PlayerStates[game.players[i].id];
-                //var after = game.players[i].syncObject.distancePresses;
-                //console.log("id : ", game.players[i].id, ", Presses before : ", before, "  ,   after : ", after);
             }
         }
 
@@ -512,11 +496,11 @@
 
             this.screenUpdateMs = 50;   
             this.uploadUpdateMS = 500;  
-            this.timerTime = 200; //TODO : remove after sountdownTimer function implemented
             this.countdownTime = 5;
 
             this.stopWatch = 0;        
             this.timerlock = true;
+            this.endGame = function (playerStates) { endGameSequence(playerStates); }
             
         }
 
@@ -538,7 +522,6 @@
                 this.syncObject.distancePresses++;
             }
             this.hasFinishedRace = function () {
-                //console.log("syncObject.distancePresses : ", this.syncObject.distancePresses, " >   game.totalPresses :", game.totalPresses);
                 if (this.syncObject.distancePresses > game.totalPresses) {
                     return true;
                 }
@@ -628,7 +611,6 @@
         document.body.addEventListener('keydown', function (e) {
             //player_keys
             if (e.keyCode == player_keys[index] && !game.timerlock) {
-                //game.players[group.cachedIndex].increment(); //increment distance
                 game.thisPlayer.increment();
                 index = changeI(index);
             }
@@ -678,7 +660,6 @@
             c.fillRect(0, 0, canvas.width, canvas.height);
             preperationTasks();
             generatedStatic();
-            //console.log(game.timerTime);
             if (program.currentPage == "game") {
                 if (game.countdownTime <= 0) {
                     stopWatchUpdate();
@@ -691,7 +672,7 @@
             setTimeout(draw, game.screenUpdateMs);
         }
 		
-        //TODO: refactor this? as want to keep objects separate
+
         function preperationTasks() {
             for (i in game.players) {
                 //update canvas with presses position
@@ -702,14 +683,10 @@
 
             //check if the race is finished
             if (game.thisPlayer.hasFinishedRace() && !game.thisPlayer.hasSentFinished()) {  //&& game.thisPlayer.raceComplete == false
-
-                console.log("***** SEND SIGNAL ********");
-
                 var dateTimeMS = new Date().getTime();
                 var msSinceStart =  dateTimeMS - game.thisPlayer.startTime;
                 //console.log("dateTimeMS : ", dateTimeMS, " - type : ", (typeof dateTimeMS), " , game.startTime : ", game.thisPlayer.startTime, " - type : ", (typeof game.thisPlayer.startTime));
                 game.thisPlayer.syncObject.finishTimeMs = msSinceStart;
-                //console.log("This should send this objet to the server", game.thisPlayer.syncObject );
                 chatHub.server.endGame(game.thisPlayer.syncObject);
                 game.thisPlayer.sentFinishedSignal = true; //send the endgame message to the server ONCES
             }
@@ -718,28 +695,27 @@
   
 
 
-        function checkEndGame(playerFinishedObjectIn) {
-            var playerFinishedObject = JSON.parse(playerFinishedObjectIn);
-            console.log("DOWN : ", playerFinishedObject);
-            game.finishPosition.push( playerFinishedObject); //{ name: game.players[i].name, time: secsTotal }
-
-            if (game.finishPosition.length >= game.players.length) {
-                var html = "<table>";
-                html += "<tr><th>POSITION</th><th>NAME</th><th>TIME</th></tr>"; //
-                for (j in game.finishPosition) {
-                    var pos = parseInt(j) + 1;
-                    html += "<tr><td>" + pos + "</td><td>" + game.finishPosition[j].name + "</td><td>" + game.finishPosition[j].time + "</td></tr>";
+        function endGameSequence(playerStates) {
+            var html = "<table>";
+            html += "<tr><th>POSITION</th><th>NAME</th><th>TIME</th></tr>"; //
+            for(i in playerStates){
+                var finishTimeSecs = (playerStates[i].Value.finishTimeMs/1000).toFixed(1);
+                var userId = playerStates[i].Value.userId;
+                var pos = parseInt(i) + 1;
+                var name = "";
+                //get names from id
+                for(j in game.players){
+                    if(game.players[j].id == userId){
+                        name = game.players[j].name;
+                        break
+                    }
                 }
-                html += "</table>"
-                $(".resultsContainer").html(html);
-                //chatHub.server.endGame(group.id);
-                setScreen("results");
+                html += "<tr><td>" + pos + "</td><td>" + name + "</td><td>" + finishTimeSecs + "</td></tr>";
             }
-
-
-            //setScreen("results");
+            html += "</table>"
+            $(".resultsContainer").html(html);
+            setScreen("results");
         }
-
 
 
         function drawImgs(){
@@ -864,65 +840,17 @@
 
 <!-- 
     FUTURE IMPROVEMENTS:
-    1) Need to seperate the GAME from CHAT ROOM logic
+    *) ****insert here****
 
      @font-face { 
-            font-family: 'LCD'; 
-            src:  
-               /*url('/css/fonts/DINLightAlternate.svg#Din') format('svg'),  Legacy iOS*/ 
-               /*url('/css/fonts/DINLightAlternate.eot?#iefix') format('embedded-opentype'),  IE6-IE8 */
-               /*url('/css/fonts/DINLightAlternate.woff2') format('woff2'),  Super Modern Browsers */
-               /*url('/css/fonts/DINLightAlternate.woff') format('woff'),  Pretty Modern Browsers */
-               url('/css/Fonts/LCD_Solid.ttf')  format('truetype'); /*PTS55F.ttf Safari, Android, iOS */
-            font-weight: normal; 
-            font-style: normal;
-        }
-    
-         //For initial startoff countdown and stopwatch
-        function countdown() {
-            //on start - 
-            //CLIENT updateCountdown 
-                
-            var caption;
-
-            //if (game.timerTime <= 0) {
-            //    caption = "";
-            //    game.timerlock = false;
-            //    c.font = "50px LCD";
-
-
-            //    //need to get time at start of game
-            //    //need to check 
-
-            //    c.fillText((game.stopWatch / 50), 450, 790);
-
-            //    console.log("game.stopWatch / 50 : "+ game.stopWatch );
-
-            //    game.stopWatch++;
-            //}
-            //else {
-                    
-            //}
-
-            caption = Math.ceil(game.timerTime / 50) + "";
-
-            c.fillStyle = '#FFF';
-            c.font = "120px LCD";
-            c.fillText(caption, 500, 470);
-
-            game.timerTime--;
-        }
-
-        function stopWatchUpdate() {
-            var caption = "";
-            game.timerlock = false;
-            c.font = "50px LCD";
-            //need to get time at start of game
-            //need to check 
-            c.fillText((game.stopWatch / 50), 450, 790);
-            //console.log("game.stopWatch / 50 : "+ program.stopWatch );
-            program.stopWatch++;
-
-        }
-
-    --> 
+        font-family: 'LCD'; 
+        src:  
+            /*url('/css/fonts/DINLightAlternate.svg#Din') format('svg'),  Legacy iOS*/ 
+            /*url('/css/fonts/DINLightAlternate.eot?#iefix') format('embedded-opentype'),  IE6-IE8 */
+            /*url('/css/fonts/DINLightAlternate.woff2') format('woff2'),  Super Modern Browsers */
+            /*url('/css/fonts/DINLightAlternate.woff') format('woff'),  Pretty Modern Browsers */
+            url('/css/Fonts/LCD_Solid.ttf')  format('truetype'); /*PTS55F.ttf Safari, Android, iOS */
+        font-weight: normal; 
+        font-style: normal;
+    }
+--> 
