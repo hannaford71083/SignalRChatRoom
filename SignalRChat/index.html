@@ -517,7 +517,7 @@
 
             this.stopWatch = 0;        
             this.timerlock = true;
-            this.startTime;
+            
         }
 
         function Player(inName, inId) {
@@ -526,6 +526,7 @@
             this.canvasObject;
             this.distancePresses = 0;
             this.sentFinishedSignal = false;
+            this.startTime;
             this.syncObject = { //object synced with server
                 "userId": inId,
                 "groupId": group.id, 
@@ -658,11 +659,13 @@
         function stopWatchUpdate() {
             if (game.timerlock) {
                 game.timerlock = false;
-                this.startTime = new Date();
+                game.thisPlayer.startTime = new Date().getTime();
+                //console.log("this.startTime - before : ", game.thisPlayer.startTime);
             }
             //stop watch needs to be ran according to clients system clock 
-            var dateTimeMS = new Date();
-            var msSinceStart = dateTimeMS - this.startTime;
+            var dateTimeMS = new Date().getTime();
+            var msSinceStart = dateTimeMS - game.thisPlayer.startTime;
+            //console.log("msSinceStart : ", msSinceStart);
             c.font = "50px LCD";
             c.fillText((msSinceStart / 1000).toFixed(1).toString(), 450, 790);
         }
@@ -700,16 +703,15 @@
             //check if the race is finished
             if (game.thisPlayer.hasFinishedRace() && !game.thisPlayer.hasSentFinished()) {  //&& game.thisPlayer.raceComplete == false
 
-                //CONTINUE HERE - Not working
+                console.log("***** SEND SIGNAL ********");
 
-                console.log("***** SEND SIGNAL ********");
-                console.log("***** SEND SIGNAL ********");
-                console.log("***** SEND SIGNAL ********");
-                var dateTimeMS = new Date();
-                var msSinceStart = dateTimeMS - game.startTime; 
+                var dateTimeMS = new Date().getTime();
+                var msSinceStart =  dateTimeMS - game.thisPlayer.startTime;
+                //console.log("dateTimeMS : ", dateTimeMS, " - type : ", (typeof dateTimeMS), " , game.startTime : ", game.thisPlayer.startTime, " - type : ", (typeof game.thisPlayer.startTime));
                 game.thisPlayer.syncObject.finishTimeMs = msSinceStart;
+                //console.log("This should send this objet to the server", game.thisPlayer.syncObject );
                 chatHub.server.endGame(game.thisPlayer.syncObject);
-                game.thisPlayer.sentFinishedSignal = true;
+                game.thisPlayer.sentFinishedSignal = true; //send the endgame message to the server ONCES
             }
 
         }
@@ -730,7 +732,7 @@
                 }
                 html += "</table>"
                 $(".resultsContainer").html(html);
-                chatHub.server.endGame(group.id);
+                //chatHub.server.endGame(group.id);
                 setScreen("results");
             }
 
