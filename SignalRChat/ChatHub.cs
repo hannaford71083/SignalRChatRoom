@@ -23,16 +23,12 @@ namespace SignalRChat
         #region Data Members
 
 
-        static List<UserDetail> ConnectedUsers = new List<UserDetail>(); //If no constructor will default to ConcurrentQueue<T>
-        static List<MessageDetail> CurrentMessage = new List<MessageDetail>();
-        static List<Group> GroupList = new List<Group>();
-
-        // use this here :  http://www.asp.net/signalr/overview/getting-started/tutorial-high-frequency-realtime-with-signalr
+        static HubBlockingCollection<UserDetail> ConnectedUsers = new HubBlockingCollection<UserDetail>(); //If no constructor will default to ConcurrentQueue<T>
+        static HubBlockingCollection<Group> GroupList = new HubBlockingCollection<Group>(); 
+        static HubBlockingCollection<MessageDetail> CurrentMessage = new HubBlockingCollection<MessageDetail>(); 
 
         static ConcurrentDictionary<string, GameGroup> GameGroups = new ConcurrentDictionary<string, GameGroup>();
-
-        //Static timer acts as Clock cycle for instances of Group countdown
-        static System.Timers.Timer CountdownTimerLoop = null;
+        static System.Timers.Timer CountdownTimerLoop = null; //Static timer acts as Clock cycle for instances of Group countdown
         static ConcurrentQueue<GameGroup> CountDownQueue = new ConcurrentQueue<GameGroup>();
 
         #endregion
@@ -163,6 +159,8 @@ namespace SignalRChat
             {
                 newGroup.addUserDetail(userDetail);
                 GroupList.Add(newGroup);
+                Groups.Add(userId, newGroup.id);
+
             }
             catch (Exception e) {
                 Debug.WriteLine("ChatHub - AddGroup() error : "+ e.Message);  
@@ -185,17 +183,25 @@ namespace SignalRChat
                 //add user detail that = userID
                 ConnectedUsers.FirstOrDefault(o => o.ConnectionId == userId)
                 );
+
+            Groups.Add(userId, GroupList.FirstOrDefault(o => o.getAdminId() == adminID ).id );
+
             this.UpdateClientGroups();
         }
 
 
         public void SignalStartGame( string groupID)
         {
-            var a = groupID;
-            Group adminGroup = GroupList.FirstOrDefault(o => o.id == groupID);
-            foreach (UserDetail user in adminGroup.users) {
-                Groups.Add(user.ConnectionId, groupID);
-            }
+            //var a = groupID;
+            //Group adminGroup = GroupList.FirstOrDefault(o => o.id == groupID);
+
+            //Debug.WriteLine("SignalStartGame( "+ groupID +" )");
+            
+            //foreach (UserDetail user in adminGroup.users) {
+            //    Groups.Add(user.ConnectionId, groupID);
+            //    Debug.WriteLine("SignalStartGame( " + groupID + " )");
+            //}
+
             Clients.Group(groupID).showSplash();
         }
 
@@ -431,6 +437,7 @@ namespace SignalRChat
 
 // ---------------- ORIGINALLY IN CODE ---------------- 
 
+// use this here :  http://www.asp.net/signalr/overview/getting-started/tutorial-high-frequency-realtime-with-signalr
 
 // ------- AS FOUND IN public override System.Threading.Tasks.Task OnDisconnected(bool stopCalled) ------- 
 
