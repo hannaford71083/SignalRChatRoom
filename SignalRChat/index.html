@@ -17,7 +17,9 @@
         font-style: normal;
     }
     .joined, 
-    .join, .start, 
+    .join, 
+    .start, 
+    .playing,
     .members { float:right; display: none; font-size: 10px; cursor: pointer; }
     .memberGroup {  position: relative; }
     ul.memberContainer { list-style: none; position: absolute; left: 215px; top: -20px; border: solid #000 1px; padding: 0; }
@@ -280,7 +282,18 @@
                             $("#" + adminId).find(".join").hide();
                             $("#" + adminId).find(".joined").show();
                         }
+
+                        if (groupInfoArray[i].users[j].Status == 1) { //Status = 1 -> 'OnSplash' 
+                            console.log("Status is 'playing'");
+                            $("#" + userId).find(".playing").show();
+                            $("#" + adminId).find(".join").hide();
+                            $("#" + adminId).find(".joined").hide();
+                        }
+
                     }
+
+                    
+
 
                 }//j
             }//i
@@ -377,7 +390,7 @@
             });
         }
         else {
-            code = $('<a id="' + id + '" class="user" >' + name + "<span class='join'>&nbsp;join&nbsp;</span><span class='joined'>&nbsp;joined&nbsp;</span><a></div>");
+            code = $('<a id="' + id + '" class="user" >' + name + "<span class='join'>&nbsp;join&nbsp;</span><span class='joined'>&nbsp;joined&nbsp;</span><span class='playing'>&nbsp;playing&nbsp;</span><a></div>");
             $(code).dblclick(function () {
                 var id = $(this).attr('id');
                 if (userId != id)

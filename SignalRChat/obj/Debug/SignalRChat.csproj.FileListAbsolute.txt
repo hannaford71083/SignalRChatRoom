@@ -35,7 +35,6 @@ C:\Users\David\Documents\Visual Studio 2013\Projects\SignalRChatRoom\SignalRChat
 C:\Users\David\Documents\Visual Studio 2013\Projects\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.csprojResolveAssemblyReference.cache
 C:\Users\David\Documents\Visual Studio 2013\Projects\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.dll
 C:\Users\David\Documents\Visual Studio 2013\Projects\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.pdb
-C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.pdb
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\SignalRChat.dll.config
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\SignalRChat.dll
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\SignalRChat.pdb
@@ -52,5 +51,5 @@ C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Microsoft.Owin.
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Microsoft.Owin.Host.SystemWeb.xml
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Microsoft.Owin.Security.xml
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\bin\Newtonsoft.Json.xml
-C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.csprojResolveAssemblyReference.cache
 C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.dll
+C:\Users\dh1011\Documents\GitHub\SignalRChatRoom\SignalRChat\obj\Debug\SignalRChat.pdb

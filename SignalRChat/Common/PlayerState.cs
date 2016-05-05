@@ -22,9 +22,28 @@ namespace SignalRChat.Common
         public int Clicks;
         [JsonProperty("finishTimeMs")]
         public int FinishTimeMS;
+        
         [JsonIgnore]
-        public bool SentLatestFlag;
-
+        private bool _sentLatestFlag;
+        [JsonIgnore]
+        private object _lock = new object();
+        [JsonIgnore]
+        public bool SentLatestFlag
+        {
+            set {
+                lock(_lock){
+                    this._sentLatestFlag = value;       
+                }
+            }
+            get {
+                lock(_lock){
+                    return this._sentLatestFlag;
+                }
+            }
+        }
+        
+        
+            
         internal void UpdateClicks(PlayerState playerState)
         {
             Interlocked.Exchange(ref this.Clicks, playerState.Clicks);
@@ -36,17 +55,12 @@ namespace SignalRChat.Common
 
         internal void resetSentLatestFlagToFalse()
         {
-            lock (this) {
-                this.SentLatestFlag = false;
-            }   
+            this.SentLatestFlag = false;
         }
 
         internal bool SentLatestFlagRead()
         {
-            lock (this)
-            {
-                return this.SentLatestFlag;
-            }  
+            return this.SentLatestFlag;
         }
     }
 

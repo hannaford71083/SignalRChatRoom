@@ -152,8 +152,12 @@ namespace SignalRChat
             Debug.WriteLine("ChatHub - AddGroup() - attempt add user ID: " + userId );  
             Guid groupId = Guid.NewGuid();
             Group newGroup = new Group();
-            newGroup.id = groupId.ToString();
+
+            string groupIdString = groupId.ToString();
+            Interlocked.Exchange(ref newGroup.id, groupIdString );//newGroup.id = groupId.ToString();
+            //Interlocked.Exchange(ref newGroup.adminId, userId);
             newGroup.adminId = userId;
+
             UserDetail userDetail = ConnectedUsers.FirstOrDefault(o => o.ConnectionId ==  userId );  //find the userDetails form userId     o => o.Items != null && 
             try
             {
@@ -175,7 +179,7 @@ namespace SignalRChat
             Clients.All.updateGroupInfo(output);
         }
 
-
+        // *TS: MEDIUM
         public void AddUserToGroup(string userId, string adminID) {
             Debug.WriteLine("ChatHub - AddUserToGroup() - user ID: " + userId + ", admin ID: " + adminID);  
             //loop through all groups 
@@ -192,6 +196,16 @@ namespace SignalRChat
 
         public void SignalStartGame( string groupID)
         {
+
+            foreach (UserDetail user in GroupList.FirstOrDefault(o => o.id == groupID).users) {
+                user.Status = PlayerStatus.OnSplash;
+            }
+            
+            //FirstOrDefault(o => o.ConnectionId == playerId).Status = PlayerStatus.Ready;
+
+            //*** remove group from Groups list & Update ***
+            this.UpdateClientGroups();
+
             Clients.Group(groupID).showSplash();
         }
 
@@ -457,20 +471,6 @@ namespace SignalRChat
 // ------------ END --------------- OnDisconnected(bool stopCalled) ------------ END ---------------
 
 
-
-////id Clients item this
-//public static void CheckAndRemoveGroup( SignalRChat.ChatHub ch, SignalRChat.Common.UserDetail item, string id ) {
-//    Debug.WriteLine("ChatHub - CheckAndRemoveGroup(xxxx)");
-//    ch.Clients.All.onUserDisconnected(id, item.UserName);
-//    foreach (Group group in GroupList)
-//    {
-//        if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null)
-//        {
-//            group.removeUserwithId(id); //REFACTOR LATER - NOT THREAD SAFE
-//        }
-//    }
-//    ch.UpdateClientGroups();
-//}
 
 ////TODO: Unhandled Error, is CancellationToken needed as parameter to be passed in (more research required), also access modifier required?
 //static void NonBlockingConsumer<T>( BlockingCollection<T> bc, CancellationToken ct, T item)
