@@ -262,7 +262,8 @@ namespace SignalRChat
         /// Timer Loop for the 'Countdown' process to start race hardcoded to run every 1000ms, could be refactored to be something that could run x times every second
         ///     this could be useful in order to stagger starting times, or for the pushing of data to users.
         /// </summary>
- 
+
+        // *TS: NOT REQUIRED
         private void StartTimerLoop(){
             //initialise only one timer loop, like a Singleton pattern :¬D
             if (CountdownTimerLoop == null)
@@ -295,10 +296,11 @@ namespace SignalRChat
                     CountDownQueue.TryDequeue(out gg);
                 }
             }
+
         }
 
 
-        // *TS: TODO - VERY IMPORTANT
+        // *TS: DONE - User interlocking / locking in dependent methods
         //Uploads from Client, finds and updates current client, then sends update to group if has latest info
         public void UploadData(PlayerState playerState)
         {
@@ -306,9 +308,9 @@ namespace SignalRChat
                 //instead of adding whole object, add only the clicks using Interlock
                 //GameGroups[playerState.GroupId].PlayerStates[playerState.Id] = playerState; //TODO: Experiment - is this a lot quicker than just updating clicks property
 
-                GameGroups[playerState.GroupId].PlayerStates[playerState.Id].UpdateClicks(playerState);
+                GameGroups[playerState.GroupId].PlayerStates[playerState.Id].UpdateClicks(playerState); //Interlocking so is Threadsafe 
 
-                if (GameGroups[playerState.GroupId].IsDownloadReady())
+                if (GameGroups[playerState.GroupId].IsDownloadReady()) //uses Interlocking to check playerstate dependecy flag 
                 {
                     Clients.Group(playerState.GroupId).updateGame(GameGroups[playerState.GroupId]); //sends group back to players in group
                     GameGroups[playerState.GroupId].ResetSents();
@@ -321,40 +323,31 @@ namespace SignalRChat
         }
 
 
+
+        // *TS - DONE  
         public void EndGame(PlayerState playerState)
         {
 
-            var a = playerState;
-
-            //Clients.Group(groupId).stopGameInterupt(finishObject);
-
-            //1) find group
-            //2) Find player in group
-            //3) Add Finish time
+            //Need to update the end time only
             GameGroups[playerState.GroupId].PlayerStates[playerState.Id] = playerState;
             
-            //4) check group has finished
+            // check group has finished
             Debug.WriteLine("------- Loop -------");
             bool areAllFinished = true;
-            foreach(var item in GameGroups[playerState.GroupId].PlayerStates.Keys)
+            foreach(PlayerState ps in GameGroups[playerState.GroupId].PlayerStates.Values)
             {
-                int finishTime = GameGroups[playerState.GroupId].PlayerStates[item].FinishTimeMS;
-                if (finishTime <= 0 ) {
+                if (ps.GetFinishTimeMS() <= 0)
+                {
                     areAllFinished = false;
                 }
-                Debug.WriteLine("finsihTime : " + finishTime);
+                Debug.WriteLine("finsihTime : " + ps.FinishTimeMS);
             }
 
             if (areAllFinished) {
-
-                string cdsfds = "Peter piper picked a peck of pickled peppers";
-
                 var sortedList = GameGroups[playerState.GroupId].PlayerStates.OrderBy(kp => kp.Value.FinishTimeMS).ToList();
-
                 Debug.WriteLine("Send stop signal to all: ");
                 //Clients.Group(playerState.GroupId).clientEndGame(GameGroups[playerState.GroupId]);
                 Clients.Group(playerState.GroupId).clientEndGame(sortedList);
-
             }
 
         }
@@ -369,14 +362,14 @@ namespace SignalRChat
             {
                 while (ConnectedUsers.Contains(item)) { 
                     var id = Context.ConnectionId;
-                    ConnectedUsers.Remove(item);
+                    ConnectedUsers.Remove(item); // *TS: TODO Need to make Chat Lists/objects Threadsafe
                     Clients.All.onUserDisconnected(id, item.UserName);
 
                     foreach (Group group in GroupList)
                     {
                         if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null)
                         {
-                            group.removeUserwithId(id); //TODO: REFACTOR LATER - NOT THREAD SAFE
+                            group.removeUserwithId(id); // *TS: TODO - REFACTOR LATER - NOT THREAD SAFE
                         }
                     }
                 }
@@ -419,7 +412,7 @@ namespace SignalRChat
 
         private void AddMessageinCache(string userName, string message)
         {
-            CurrentMessage.Add(new MessageDetail { UserName = userName, Message = message });
+            CurrentMessage.Add(new MessageDetail { UserName = userName, Message = message }); // *TS : not Chat Lists/objects not threadsafe
 
             //TODO : ADD limit back
             //if (CurrentMessage.Count > 100)

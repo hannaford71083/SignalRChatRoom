@@ -26,26 +26,32 @@ namespace SignalRChat.Common
 
 
         public void DecrementTimer(){
-            this.countdownTime--;
+            this.countdownTime--; //only accessed by 1 thread no need for Thread Safety
         }
 
 
         public bool IsDownloadReady() {
+
+            //---- MEASURE ----
             bool allready = true;
             foreach (var item in PlayerStates)
             {
-                if (PlayerStates[item.Key].SentLatestFlag) { allready = false; }
+                if (PlayerStates[item.Key].SentLatestFlagRead()) { allready = false; }
             }
             return allready;
+            //---- MEASURE ----
         }
 
 
         public void ResetSents() {
+
+            //---- MEASURE ----
             foreach (var item in PlayerStates)
             {
-                PlayerStates[item.Key].resetSentLatestFlagToFalse();
+                PlayerStates[item.Key].resetSentLatestFlagToFalse(); //Threadsafe uses interlocking
                 //PlayerStates[item.Key].SentLatestFlag = false;
             }
+            //---- MEASURE ----
         
         }
 

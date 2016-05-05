@@ -10,6 +10,10 @@ namespace SignalRChat.Common
     [JsonObject]
     public class PlayerState
     {
+
+        /// <summary>
+        /// Properties are public as exchanged with Signal-R client
+        /// </summary>
         [JsonProperty("userId")]
         public string Id;
         [JsonProperty("groupId")]
@@ -23,9 +27,11 @@ namespace SignalRChat.Common
 
         internal void UpdateClicks(PlayerState playerState)
         {
-            
             Interlocked.Exchange(ref this.Clicks, playerState.Clicks);
-            
+        }
+
+        internal int GetFinishTimeMS() { 
+            return Interlocked.CompareExchange( ref this.FinishTimeMS, 0, 0 ); // like Read, will only exchange 0 with 0! 
         }
 
         internal void resetSentLatestFlagToFalse()
@@ -35,9 +41,13 @@ namespace SignalRChat.Common
             }   
         }
 
-
-
-
+        internal bool SentLatestFlagRead()
+        {
+            lock (this)
+            {
+                return this.SentLatestFlag;
+            }  
+        }
     }
 
 }
