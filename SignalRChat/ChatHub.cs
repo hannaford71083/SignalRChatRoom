@@ -184,7 +184,7 @@ namespace SignalRChat
                 ConnectedUsers.FirstOrDefault(o => o.ConnectionId == userId)
                 );
 
-            Groups.Add(userId, GroupList.FirstOrDefault(o => o.getAdminId() == adminID ).id );
+            Groups.Add(userId, GroupList.FirstOrDefault(o => o.getAdminId() == adminID ).id ); //SiganalR Group
 
             this.UpdateClientGroups();
         }
@@ -192,16 +192,6 @@ namespace SignalRChat
 
         public void SignalStartGame( string groupID)
         {
-            //var a = groupID;
-            //Group adminGroup = GroupList.FirstOrDefault(o => o.id == groupID);
-
-            //Debug.WriteLine("SignalStartGame( "+ groupID +" )");
-            
-            //foreach (UserDetail user in adminGroup.users) {
-            //    Groups.Add(user.ConnectionId, groupID);
-            //    Debug.WriteLine("SignalStartGame( " + groupID + " )");
-            //}
-
             Clients.Group(groupID).showSplash();
         }
 

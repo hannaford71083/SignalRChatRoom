@@ -27,13 +27,6 @@ namespace SignalRChat.Common
             this.SentLatest = false;
         }
 
-        public void updateKeyPresses(int keyPresses) {
-            if (!this.SentLatest) {
-                this.KeyPresses = keyPresses;
-                this.SentLatest = true;
-            }
-        }
-
 
     }
 
