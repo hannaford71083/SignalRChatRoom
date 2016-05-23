@@ -7,6 +7,12 @@ using System.Threading;
 
 namespace SignalRChat.Common
 {
+
+    /// <summary>
+    /// Class holds data that is exchanged between the Client and Server regarding the state of a particular player ;¬)
+    /// </summary>
+
+
     [JsonObject]
     public class PlayerState
     {
@@ -32,7 +38,7 @@ namespace SignalRChat.Common
         {
             set {
                 lock(_lock){
-                    this._sentLatestFlag = value;       
+                    this._sentLatestFlag = value;
                 }
             }
             get {

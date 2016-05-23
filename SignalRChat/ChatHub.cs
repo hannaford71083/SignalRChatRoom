@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using Newtonsoft.Json;
 //using System.Threading;
-
+using NLog;
 
 namespace SignalRChat
 {
@@ -22,15 +22,16 @@ namespace SignalRChat
     {
         #region Data Members
 
+        static HubBlockingCollection<UserDetail>    ConnectedUsers  = new HubBlockingCollection<UserDetail>(); //If no constructor will default to ConcurrentQueue<T>
+        static HubBlockingCollection<Group>         GroupList       = new HubBlockingCollection<Group>(); 
+        static HubBlockingCollection<MessageDetail> CurrentMessage  = new HubBlockingCollection<MessageDetail>(); 
 
-        static HubBlockingCollection<UserDetail> ConnectedUsers = new HubBlockingCollection<UserDetail>(); //If no constructor will default to ConcurrentQueue<T>
-        static HubBlockingCollection<Group> GroupList = new HubBlockingCollection<Group>(); 
-        static HubBlockingCollection<MessageDetail> CurrentMessage = new HubBlockingCollection<MessageDetail>(); 
+        static ConcurrentDictionary<string, GameGroup>  GameGroups      = new ConcurrentDictionary<string, GameGroup>();
+        static ConcurrentQueue<GameGroup>           CountDownQueue      = new ConcurrentQueue<GameGroup>();
+        static System.Timers.Timer                  CountdownTimerLoop  = null; //Static timer acts as Clock cycle for instances of Group countdown
 
-        static ConcurrentDictionary<string, GameGroup> GameGroups = new ConcurrentDictionary<string, GameGroup>();
-        static System.Timers.Timer CountdownTimerLoop = null; //Static timer acts as Clock cycle for instances of Group countdown
-        static ConcurrentQueue<GameGroup> CountDownQueue = new ConcurrentQueue<GameGroup>();
-
+        public static Logger logger = LogManager.GetCurrentClassLogger();
+        
         #endregion
 
 
@@ -43,11 +44,9 @@ namespace SignalRChat
         {
             DateTime rightNow = new DateTime();
             rightNow = DateTime.Now;
-
             //Init Trace for logging
             Debug.Listeners.Add(new TextWriterTraceListener(Console.Out));
             Debug.WriteLine("ChatHub - Connect() at {0}", rightNow);
-
             var id = Context.ConnectionId;
             if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
             {
@@ -55,7 +54,6 @@ namespace SignalRChat
                 Clients.Caller.onConnected(id, userName, ConnectedUsers, CurrentMessage); // send to caller
                 Clients.AllExcept(id).onNewUserConnected(id, userName); // send to all except caller client
             }
-
             this.StartTimerLoop();
         }
 
@@ -80,16 +78,23 @@ namespace SignalRChat
                 //every 4 people setup new group
                 if (userInGroupI == 0)
                 {
+                    //create user - add to general users list
                     adminforGroupId = user.ConnectionId;
-                    ConnectedUsers.Add(new UserDetail { ConnectionId = adminforGroupId, UserName = user.UserName });
+                    ConnectedUsers.Add(new UserDetail { ConnectionId = adminforGroupId, UserName = user.UserName }); //user auto added to Clients.All SignalR group system
+
+
                     Guid groupId = Guid.NewGuid();
                     Group newGroup = new Group();
                     newGroup.id = groupId.ToString();
                     UserDetail userDetail = ConnectedUsers.FirstOrDefault(o => o.ConnectionId == adminforGroupId);  //find the userDetails form userId     o => o.Items != null && 
+
+                    //this.AddUserToGroup(string userId, string adminID)
+                   
                     try
                     {
                         newGroup.addUserDetail(userDetail);
                         GroupList.Add(newGroup);
+                        Groups.Add(adminforGroupId, newGroup.id);
                     }
                     catch (Exception e)
                     {
@@ -101,31 +106,68 @@ namespace SignalRChat
                     //Linq statement taken from AddUserToGroup(string userId, string adminID) 
                     GroupList.FirstOrDefault(o => o.getAdminId() == adminforGroupId).addUserDetail(
                         ConnectedUsers.FirstOrDefault(o => o.ConnectionId == user.ConnectionId));
-                }
 
+                    string groupId = GroupList.FirstOrDefault(o => o.getAdminId() == adminforGroupId).id;
+                    Groups.Add(user.ConnectionId, groupId);
+
+                }
                 //loop through 0,1,2,3 then back 
-                if (userInGroupI == 3)
-                {
-                    userInGroupI = 0;
-                }
-                else
-                {
-                    userInGroupI += 1;
-                }
+                int beforeuserInGroupI = userInGroupI;
+                userInGroupI = userInGroupI == 3 ? 0 : userInGroupI += 1 ;
+                Debug.WriteLine("userInGroup Ibefore : " + beforeuserInGroupI + " , is Now : " + userInGroupI);
+                
+                //*TEST * *TEST * *TEST * *TEST *
+                //REFACTORED TO ABOVE 
+                //if (userInGroupI == 3)
+                //{
+                //    userInGroupI = 0;
+                //}
+                //else
+                //{
+                //    userInGroupI += 1;
+                //}
 
-                Clients.Client(user.ConnectionId).UploadListInfo(user.ConnectionId, GroupList.FirstOrDefault(o => o.getAdminId() == adminforGroupId).id);
+                Clients.Client(user.ConnectionId).UploadListInfo(user.ConnectionId, GroupList.FirstOrDefault(o => o.getAdminId() == adminforGroupId).id); // send group info to client
             }
 
+            Debug.WriteLine("----- ----- Game Groups Assignment ----- ----- ");
+            foreach (Group group in GroupList)
+            {
+                this.addGameGroupAndUsers(group.id);
+            }
+            var a = GameGroups;
+            Debug.WriteLine("----- ----- ----- ----- ----- ----- ");
         }
 
 
+        ///for load test harness - convert add game group from GroupList info
+        private void addGameGroupAndUsers(string groupID){
+            GameGroup newGameGroup = new GameGroup(groupID);
+            bool failedAdd = false;
+            foreach (UserDetail user in GroupList.FirstOrDefault(o => o.id == groupID).users)
+            {
+                PlayerState playerState = new PlayerState();
+                playerState.Id = user.ConnectionId;
+                if (!newGameGroup.PlayerStates.TryAdd(user.ConnectionId, playerState)) { failedAdd = true; } //LOW threadsafe Risk, only one client inititates creation of group
+            }
+            //What if not added initially, requires while loop?
+            if (!GameGroups.TryAdd(groupID, newGameGroup)) { failedAdd = true; } //MEDIUM threadsafe Risk
+            if (failedAdd)
+            {
+                //TODO: Add ClientError() callback
+                Debug.WriteLine("Failed to Add Player to Group or Group to List");
+            }
+            else
+            {
+                Debug.WriteLine("Added Following Group "+ newGameGroup.id + " !!!!!! " );
+            }
+        }
 
 
         public void SendMessageToAll(string userName, string message)
         {
             // store last 100 messages in cache
             AddMessageinCache(userName, message); 
-
             // Broad cast message
             Clients.All.messageReceived(userName, message);
         }
@@ -136,7 +178,6 @@ namespace SignalRChat
             string fromUserId = Context.ConnectionId;
             var toUser        = ConnectedUsers.FirstOrDefault(x => x.ConnectionId == toUserId) ;
             var fromUser      = ConnectedUsers.FirstOrDefault(x => x.ConnectionId == fromUserId);
-
             if (toUser != null && fromUser!=null)
             {
                 Clients.Client(toUserId).sendPrivateMessage(fromUserId, fromUser.UserName, message);  // send to 
@@ -148,7 +189,6 @@ namespace SignalRChat
 
         public void AddGroup(string userId )
         {
-
             Debug.WriteLine("ChatHub - AddGroup() - attempt add user ID: " + userId );  
             Guid groupId = Guid.NewGuid();
             Group newGroup = new Group();
@@ -187,25 +227,18 @@ namespace SignalRChat
                 //add user detail that = userID
                 ConnectedUsers.FirstOrDefault(o => o.ConnectionId == userId)
                 );
-
             Groups.Add(userId, GroupList.FirstOrDefault(o => o.getAdminId() == adminID ).id ); //SiganalR Group
-
             this.UpdateClientGroups();
         }
 
-
         public void SignalStartGame( string groupID)
         {
-
             foreach (UserDetail user in GroupList.FirstOrDefault(o => o.id == groupID).users) {
                 user.Status = PlayerStatus.OnSplash;
             }
-            
             //FirstOrDefault(o => o.ConnectionId == playerId).Status = PlayerStatus.Ready;
-
             //*** remove group from Groups list & Update ***
             this.UpdateClientGroups();
-
             Clients.Group(groupID).showSplash();
         }
 
@@ -314,22 +347,30 @@ namespace SignalRChat
         //Uploads from Client, finds and updates current client, then sends update to group if has latest info
         public void UploadData(PlayerState playerState)
         {
-            try { 
-                //instead of adding whole object, add only the clicks using Interlock
-                //GameGroups[playerState.GroupId].PlayerStates[playerState.Id] = playerState; //TODO: Experiment - is this a lot quicker than just updating clicks property
+            try {
 
-                GameGroups[playerState.GroupId].PlayerStates[playerState.Id].UpdateClicks(playerState); //Interlocking so is Threadsafe 
+              GameGroups[playerState.GroupId].UpdateState(playerState, this);
+              
+              //instead of adding whole object, add only the clicks using Interlock
+              //GameGroups[playerState.GroupId].PlayerStates[playerState.Id] = playerState; //TODO: Experiment - is this a lot quicker than just updating clicks property
+              //GameGroups[playerState.GroupId].PlayerStates[playerState.Id].UpdateClicks(playerState); //Interlocking so is Threadsafe 
 
-                if (GameGroups[playerState.GroupId].IsDownloadReady()) //uses Interlocking to check playerstate dependecy flag 
-                {
-                    Clients.Group(playerState.GroupId).updateGame(GameGroups[playerState.GroupId]); //sends group back to players in group
-                    GameGroups[playerState.GroupId].ResetSents();
-                }
-            }
-            catch (Exception e) {
-                Debug.WriteLine("UploadData() error, message: ", e.Message );
-            }
+              //if (GameGroups[playerState.GroupId].IsDownloadReady()) //uses Interlocking to check playerstate dependecy flag 
+              //{
+              //    GameGroup gg = GameGroups[playerState.GroupId];
 
+              //    //Debug.WriteLine("GameGroups id : " + gg.id);
+
+              //    Clients.Group(playerState.GroupId).UpdateGame(gg); //sends group back to players in group
+                  
+              //    GameGroups[playerState.GroupId].ResetSents();
+              //}
+
+
+          }
+          catch (Exception e) {
+              Debug.WriteLine("UploadData() error, message: "+ e.Message );
+          }
         }
 
 

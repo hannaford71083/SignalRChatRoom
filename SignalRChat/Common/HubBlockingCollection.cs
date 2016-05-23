@@ -10,6 +10,8 @@ using System.Diagnostics;
 /*
     -----------  ----------- NOTES -----------  ----------- 
  * 
+ *  Class is a way to easily replace all List<> usuage (including syntax e.g. Add method) into a Thread safe collection
+ *
  * ---- FUTURE IMPROVEMENTS ---
  * 1) Think about how to handle exceptions, throw exceptions up a level ???
  * 2) Is there a test to see how this works :¬s
