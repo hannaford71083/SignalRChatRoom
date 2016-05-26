@@ -237,7 +237,7 @@ namespace SignalRChat
             Clients.Group(groupID).showSplash();
         }
 
-
+         
         // *TS: MEDIUM
         public void PlayerReady(string playerId, string groupID)
         {
