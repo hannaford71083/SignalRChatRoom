@@ -114,19 +114,6 @@ namespace SignalRChat
                 //loop through 0,1,2,3 then back 
                 int beforeuserInGroupI = userInGroupI;
                 userInGroupI = userInGroupI == 3 ? 0 : userInGroupI += 1 ;
-                Debug.WriteLine("userInGroup Ibefore : " + beforeuserInGroupI + " , is Now : " + userInGroupI);
-                
-                //*TEST * *TEST * *TEST * *TEST *
-                //REFACTORED TO ABOVE 
-                //if (userInGroupI == 3)
-                //{
-                //    userInGroupI = 0;
-                //}
-                //else
-                //{
-                //    userInGroupI += 1;
-                //}
-
                 Clients.Client(user.ConnectionId).UploadListInfo(user.ConnectionId, GroupList.FirstOrDefault(o => o.getAdminId() == adminforGroupId).id); // send group info to client
             }
 
@@ -233,6 +220,14 @@ namespace SignalRChat
 
         public void SignalStartGame( string groupID)
         {
+            //limit ammount of games taking place simultaneously
+            int maxConnectionsAllowed = 100;  //max connections as obtained from testing on same machine
+            if (GameGroups.Count > maxConnectionsAllowed)
+            {
+                Clients.Caller.startGameError();
+                return;
+            }
+
             foreach (UserDetail user in GroupList.FirstOrDefault(o => o.id == groupID).users) {
                 user.Status = PlayerStatus.OnSplash;
             }
@@ -264,11 +259,12 @@ namespace SignalRChat
             {
                 this.InitGame(groupID);
             }
-            
         }
 
         // *TS: DONE
-        private void InitGame(string groupID) {
+        private void InitGame(string groupID) 
+        {
+
             //loop through players group
             GameGroup newGroup = new GameGroup(groupID);
 
