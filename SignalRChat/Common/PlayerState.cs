@@ -68,6 +68,7 @@ namespace SignalRChat.Common
         {
             return this.SentLatestFlag;
         }
+
     }
 
 }

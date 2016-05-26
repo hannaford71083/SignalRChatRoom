@@ -39,10 +39,15 @@ namespace SignalRChat.Common
 
             //---- MEASURE ----
             bool allready = true;
+            //ChatHub.logger.Debug("------------------ Start ----------------");
             foreach (var item in PlayerStates)
             {
-                if (PlayerStates[item.Key].SentLatestFlagRead()) { allready = false; }
+                if (!PlayerStates[item.Key].SentLatestFlagRead()) { // one of the flags is false so still waiting
+                    //ChatHub.logger.Debug("is false, so shouldn't return True!!");
+                    allready = false; 
+                }
             }
+            //ChatHub.logger.Debug("------------------ Return {0} ----------------", allready);
             return allready;
             //---- MEASURE ----
         }
@@ -51,11 +56,18 @@ namespace SignalRChat.Common
         public void ResetSents() {
            
             //---- MEASURE ----
+
+            //ChatHub.logger.Debug("------------ Start Resetting ------------ ");
+
             foreach (var item in PlayerStates)
             {
                 PlayerStates[item.Key].resetSentLatestFlagToFalse(); //Threadsafe uses interlocking
                 //PlayerStates[item.Key].SentLatestFlag = false;
+                //ChatHub.logger.Debug(" Reset flag : {0} ", PlayerStates[item.Key].SentLatestFlag);
             }
+            //ChatHub.logger.Debug("------------ End Resetting ------------ ");
+
+
             //---- MEASURE ----
             this.stopwatch.Stop();
 
@@ -70,7 +82,9 @@ namespace SignalRChat.Common
             lock (_lock)
             {
                 this.PlayerStates[playerState.Id].UpdateClicks(playerState); //Interlocking so is Threadsafe 
-            
+                this.PlayerStates[playerState.Id].SentLatestFlag = true;
+                //update sent flag duh!
+
                 if (this.IsDownloadReady()) //uses Interlocking to check playerstate dependecy flag 
                 {
                     //GameGroup gg = GameGroups[playerState.GroupId];
