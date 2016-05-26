@@ -102,8 +102,18 @@
         registerClientMethods();
         // Start Hub
         $.connection.hub.start().done(function () {
-            registerEvents();
+          registerEvents();
         });
+
+        //have to log off and on again
+        $.connection.hub.reconnecting(function () {
+          console.log("reconnecting!");
+          //http://www.asp.net/signalr/overview/guide-to-the-api/handling-connection-lifetime-events
+          //http://www.asp.net/signalr/overview/guide-to-the-api/mapping-users-to-connections
+          //chatHub.stop();
+        });
+        
+
     });
 
     function setScreen(screen) {  //screen handler

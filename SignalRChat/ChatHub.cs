@@ -417,11 +417,13 @@ namespace SignalRChat
                         if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null)
                         {
                             group.removeUserwithId(id); // *TS: TODO - REFACTOR LATER - NOT THREAD SAFE
+                            Groups.Remove(id, group.id);
                         }
                     }
                 }
                 UpdateClientGroups();
                 // << REMOVED CONTENT SEE BOTTOM >>
+                
             }
             //is it the 'end of the session', if so then flush objects
             if (ConnectedUsers.Count == 0) {
@@ -430,6 +432,13 @@ namespace SignalRChat
             return base.OnDisconnected(stopCalled); 
         }
 
+
+        public override System.Threading.Tasks.Task OnReconnected()
+        {
+            
+            
+            return base.OnReconnected();
+        }
 
         private void GarbagCollect() {
             //CurrentMessage.Dispose();
