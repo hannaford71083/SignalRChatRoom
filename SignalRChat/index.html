@@ -96,25 +96,83 @@
     // -----------  ----------- CHAT ROOM KEY FUNCTIONS -----------  ----------- 
 
     $(function () {
-        setScreen("login");
+
+        setScreen("waiting"); //until user details retreived
+      
         // GLOBAL Declare a proxy to reference the hub.
         chatHub = $.connection.chatHub; 
         registerClientMethods();
         // Start Hub
         $.connection.hub.start().done(function () {
+          console.log("CONNECTION START");
           registerEvents();
+          userManagement();
         });
 
-        //have to log off and on again
-        $.connection.hub.reconnecting(function () {
-          console.log("reconnecting!");
-          //http://www.asp.net/signalr/overview/guide-to-the-api/handling-connection-lifetime-events
-          //http://www.asp.net/signalr/overview/guide-to-the-api/mapping-users-to-connections
-          //chatHub.stop();
+        $.connection.hub.reconnected(function () {
+          registerEvents();
+          userManagement();
         });
+
         
+        
+        //have to log off and on again
+        //$.connection.hub.reconnecting(function () {
+        //  console.log("reconnecting!");
+        //  //http://www.asp.net/signalr/overview/guide-to-the-api/handling-connection-lifetime-events
+        //  //http://www.asp.net/signalr/overview/guide-to-the-api/mapping-users-to-connections
+        //  //chatHub.stop();
+          
+        //});
 
     });
+
+
+    //Attempts to retreive User Details from Cookie (possibly extended to retreive details from DB as well :¬D )
+    function userManagement() {
+      var cookieName = "chatRoomUserDetails";
+      if (getCookie(cookieName) == "") {
+        setScreen("login"); //login screen needs to set cookie
+      }
+      else {
+        var cookieObj = JSON.parse(getCookie(cookieName)); //check if cookie, if so then retreive and use that user name
+        chatHub.server.connect(cookieObj.userName);
+      }
+    }
+
+    
+    //may add further details in future to this if needed to access DB etc
+    function addUserDetailsToCookie(id, userName){
+      var cookieName = "chatRoomUserDetails";
+      var expieryInDays = 4;
+      var jsonObjString = "{  \"userName\": \"" + userName + "\" }";  //  \"id\": \"" + id + "\",
+      setCookie(cookieName, jsonObjString, expieryInDays);
+    }
+
+
+    function setCookie(cname, cvalue, exdays) {
+      var d = new Date();
+      d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+      var expires = "expires=" + d.toUTCString();
+      document.cookie = cname + "=" + cvalue + "; " + expires;
+    }
+
+    function getCookie(cname) {
+      var name = cname + "=";
+      var ca = document.cookie.split(';');
+      for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+          c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+          return c.substring(name.length, c.length);
+        }
+      }
+      return "";
+    }
+
+
 
     function setScreen(screen) {  //screen handler
         $("#divChat").hide();
@@ -124,6 +182,9 @@
         $("#divGame").hide();
         $("#divResults").hide();
         switch (screen) {
+            case "waiting":
+                $("#header").show();
+                break
             case "login":
                 $("#header").show();
                 $("#divLogin").show();
@@ -152,6 +213,9 @@
                     location.reload();
                 });
                 break;
+          default:
+              $("#header").show();
+              break;
         }
     }
 
@@ -169,36 +233,36 @@
     }
 
     function registerEvents() {
-        $("#btnStartChat").click(function () {
-            var name = $("#txtNickName").val();
-            if (name.length > 0) {
-                chatHub.server.connect(name);
-            }
-            else {
-                alert("Please enter name");
-            }
-        });
-        $('#btnSendMsg').click(function () {
-            var msg = $("#txtMessage").val();
-            if (msg.length > 0) {
-                var userName = $('#hdUserName').val();
-                chatHub.server.sendMessageToAll(userName, msg);
-                $("#txtMessage").val('');
-            }
-        });
-        $('#btnAddGroup').click(function () {
-            chatHub.server.addGroup(   $("#hdId").val()  );
-        });
-        $("#txtNickName").keypress(function (e) {
-            if (e.which == 13) {
-                $("#btnStartChat").click();
-            }
-        });
-        $("#txtMessage").keypress(function (e) {
-            if (e.which == 13) {
-                $('#btnSendMsg').click();
-            }
-        });
+      $("#btnStartChat").click(function () {
+        var name = $("#txtNickName").val();
+        if (name.length > 0) {
+          chatHub.server.connect(name);
+        }
+        else {
+          alert("Please enter name");
+        }
+      });
+      $('#btnSendMsg').click(function () {
+        var msg = $("#txtMessage").val();
+        if (msg.length > 0) {
+          var userName = $('#hdUserName').val();
+          chatHub.server.sendMessageToAll(userName, msg);
+          $("#txtMessage").val('');
+        }
+      });
+      $('#btnAddGroup').click(function () {
+        chatHub.server.addGroup(   $("#hdId").val()  );
+      });
+      $("#txtNickName").keypress(function (e) {
+        if (e.which == 13) {
+          $("#btnStartChat").click();
+        }
+      });
+      $("#txtMessage").keypress(function (e) {
+        if (e.which == 13) {
+          $('#btnSendMsg').click();
+        }
+      });
     }
 
 
@@ -209,6 +273,7 @@
 
         // Calls when user successfully logged in
         chatHub.client.onConnected = function (id, userName, allUsers, messages) {
+            addUserDetailsToCookie(id, userName);
             console.log("id : ", id, ",  userName : ", userName, " , allUsers :  ", allUsers, " ,  messages : ", messages);
 
             // ----- INITIALISE -----

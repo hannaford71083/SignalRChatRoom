@@ -40,8 +40,11 @@ namespace SignalRChat
 
         #region Methods
 
+
+        //used for connection and reconnection
         public void Connect(string userName)
         {
+
             DateTime rightNow = new DateTime();
             rightNow = DateTime.Now;
             //Init Trace for logging
