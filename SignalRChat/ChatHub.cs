@@ -50,10 +50,20 @@ namespace SignalRChat
             var id = Context.ConnectionId;
             if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
             {
+                
                 ConnectedUsers.Add(new UserDetail { ConnectionId = id, UserName = userName });
+                
                 Clients.Caller.onConnected(id, userName, ConnectedUsers, CurrentMessage); // send to caller
+                //TODO : need updateUsers(ConnectedUsers) that is refreshed everytime new user added or removed
                 Clients.AllExcept(id).onNewUserConnected(id, userName); // send to all except caller client
             }
+            Debug.WriteLine("---------- Current ConnectedUsers ------------");
+            foreach (UserDetail udItem in ConnectedUsers)
+            {
+                Debug.WriteLine(udItem.ConnectionId);
+            }
+            Debug.WriteLine("-----------------------------------------------");
+
             this.StartTimerLoop();
         }
 
@@ -405,26 +415,37 @@ namespace SignalRChat
         public override System.Threading.Tasks.Task OnDisconnected(bool stopCalled) 
         {
             var item = ConnectedUsers.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
-            if (item != null)
-            {
-                while (ConnectedUsers.Contains(item)) { 
-                    var id = Context.ConnectionId;
-                    ConnectedUsers.Remove(item); // *TS: TODO Need to make Chat Lists/objects Threadsafe
-                    Clients.All.onUserDisconnected(id, item.UserName);
+            bool takeUserSuccess = false;
 
-                    foreach (Group group in GroupList)
+            while (!takeUserSuccess)
+            { 
+                var id = Context.ConnectionId;
+                Debug.WriteLine("ConnectedUsers.Remove( id = " + id + ") ");
+                takeUserSuccess = ConnectedUsers.TryTake(out item, 1000);
+                //TODO: evelauate all instances of  ConnectedUsers.Remove(item) and Add()  
+                //TODO : need updateUsers(ConnectedUsers) that is refreshed everytime new user added or removed
+                Clients.All.onUserDisconnected(id, item.UserName);
+
+                foreach (Group group in GroupList)
+                {
+                    if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null)
                     {
-                        if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null)
-                        {
-                            group.removeUserwithId(id); // *TS: TODO - REFACTOR LATER - NOT THREAD SAFE
-                            Groups.Remove(id, group.id);
-                        }
+                        group.removeUserwithId(id); // *TS: TODO - REFACTOR LATER - NOT THREAD SAFE
+                        Groups.Remove(id, group.id);
                     }
                 }
-                UpdateClientGroups();
-                // << REMOVED CONTENT SEE BOTTOM >>
-                
             }
+            UpdateClientGroups();
+            // << REMOVED CONTENT SEE BOTTOM >>
+
+            Debug.WriteLine("---------- Current ConnectedUsers ------------");
+            foreach (UserDetail udItem in ConnectedUsers)
+            {
+                Debug.WriteLine(udItem.ConnectionId);
+            }
+            Debug.WriteLine("-----------------------------------------------");
+
+
             //is it the 'end of the session', if so then flush objects
             if (ConnectedUsers.Count == 0) {
                 this.GarbagCollect();
@@ -435,7 +456,6 @@ namespace SignalRChat
 
         public override System.Threading.Tasks.Task OnReconnected()
         {
-            
             
             return base.OnReconnected();
         }
