@@ -22,6 +22,9 @@ namespace SignalRChat
     {
         #region Data Members
 
+
+        static ConcurrentDictionary<string, UserDetail> ConnectedUsersDICT = new ConcurrentDictionary<string, UserDetail>(); 
+
         static HubBlockingCollection<UserDetail>    ConnectedUsers  = new HubBlockingCollection<UserDetail>(); //If no constructor will default to ConcurrentQueue<T>
         static HubBlockingCollection<Group>         GroupList       = new HubBlockingCollection<Group>(); 
         static HubBlockingCollection<MessageDetail> CurrentMessage  = new HubBlockingCollection<MessageDetail>(); 
@@ -51,17 +54,24 @@ namespace SignalRChat
             Debug.Listeners.Add(new TextWriterTraceListener(Console.Out));
             Debug.WriteLine("ChatHub - Connect() at {0}", rightNow);
             var id = Context.ConnectionId;
-            if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
+
+
+            if (!ConnectedUsersDICT.ContainsKey(id))
+            //if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
             {
                 
                 ConnectedUsers.Add(new UserDetail { ConnectionId = id, UserName = userName });
-                
-                Clients.Caller.onConnected(id, userName, ConnectedUsers, CurrentMessage); // send to caller
+
+                ConnectedUsersDICT.TryAdd(id, new UserDetail { ConnectionId = id, UserName = userName });
+
+                Clients.Caller.onConnected(id, userName, ConnectedUsersDICT, CurrentMessage); // send to caller
                 //TODO : need updateUsers(ConnectedUsers) that is refreshed everytime new user added or removed
-                Clients.AllExcept(id).onNewUserConnected(id, userName); // send to all except caller client
+                //Clients.AllExcept(id).onNewUserConnected(id, userName); // send to all except caller client
+                //Clients.AllExcept(id).updateUsersList(ConnectedUsers);
+                Clients.AllExcept(id).updateUsersList(ConnectedUsersDICT);
             }
-            Debug.WriteLine("---------- Current ConnectedUsers ------------");
-            foreach (UserDetail udItem in ConnectedUsers)
+            Debug.WriteLine("---------- Current ConnectedUsersDICT ------------");
+            foreach (UserDetail udItem in ConnectedUsersDICT.Values)
             {
                 Debug.WriteLine(udItem.ConnectionId);
             }
@@ -415,19 +425,26 @@ namespace SignalRChat
 
 
 
-        public override System.Threading.Tasks.Task OnDisconnected(bool stopCalled) 
+        public override System.Threading.Tasks.Task OnDisconnected(bool stopCalled)
         {
-            var item = ConnectedUsers.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
+            //UserDetail item = ConnectedUsers.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
+            UserDetail item;
             bool takeUserSuccess = false;
 
             while (!takeUserSuccess)
-            { 
-                var id = Context.ConnectionId;
+            {
+                string id = Context.ConnectionId;
                 Debug.WriteLine("ConnectedUsers.Remove( id = " + id + ") ");
                 takeUserSuccess = ConnectedUsers.TryTake(out item, 1000);
+
+                ConnectedUsersDICT.TryRemove(id, out item);
+
                 //TODO: evelauate all instances of  ConnectedUsers.Remove(item) and Add()  
                 //TODO : need updateUsers(ConnectedUsers) that is refreshed everytime new user added or removed
-                Clients.All.onUserDisconnected(id, item.UserName);
+                //Clients.All.onUserDisconnected(id, item.UserName);
+
+                Clients.All.updateUsersList(ConnectedUsers);
+
 
                 foreach (Group group in GroupList)
                 {
@@ -442,7 +459,7 @@ namespace SignalRChat
             // << REMOVED CONTENT SEE BOTTOM >>
 
             Debug.WriteLine("---------- Current ConnectedUsers ------------");
-            foreach (UserDetail udItem in ConnectedUsers)
+            foreach (UserDetail udItem in ConnectedUsersDICT.Values)
             {
                 Debug.WriteLine(udItem.ConnectionId);
             }

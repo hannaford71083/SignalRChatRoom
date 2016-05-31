@@ -69,6 +69,7 @@
         this.groups = {};
         this.currentUser;
         this.currentPage = "login";
+        this.allUsersConnected = null;
     }
 
     // -------------- USER Class -------------- 
@@ -114,8 +115,7 @@
           userManagement();
         });
 
-        
-        
+
         //have to log off and on again
         //$.connection.hub.reconnecting(function () {
         //  console.log("reconnecting!");
@@ -130,6 +130,9 @@
 
     //Attempts to retreive User Details from Cookie (possibly extended to retreive details from DB as well :¬D )
     function userManagement() {
+      setScreen("login"); // REMOVE THIS WHEN ADDING USER MANAGEMENT BACK
+      //DISABLE
+      /*
       var cookieName = "chatRoomUserDetails";
       if (getCookie(cookieName) == "") {
         setScreen("login"); //login screen needs to set cookie
@@ -138,15 +141,19 @@
         var cookieObj = JSON.parse(getCookie(cookieName)); //check if cookie, if so then retreive and use that user name
         chatHub.server.connect(cookieObj.userName);
       }
+      */
     }
 
     
     //may add further details in future to this if needed to access DB etc
-    function addUserDetailsToCookie(id, userName){
+    function addUserDetailsToCookie(id, userName) {
+      //DISABLE
+      /*
       var cookieName = "chatRoomUserDetails";
       var expieryInDays = 4;
       var jsonObjString = "{  \"userName\": \"" + userName + "\" }";  //  \"id\": \"" + id + "\",
       setCookie(cookieName, jsonObjString, expieryInDays);
+      */
     }
 
 
@@ -296,36 +303,113 @@
             for (i = 0; i < messages.length; i++) {
                 AddMessage(messages[i].UserName, messages[i].Message);
             }
+            updateUsersList(allUsers);
         }
+
+
 
         // On New User Connected
         chatHub.client.onNewUserConnected = function (id, name) {
-            console.log("onNewUserConnected --> id : ", id, ", name :", name);
-            if (program.currentPage == "chat") {
-                AddUser(id, name);
-            }
+          console.log("onNewUserConnected --> id : ", id, ", name :", name);
+          if (program.currentPage == "chat") {
+            AddUser(id, name);
+          }
         }
 
         // On User Disconnected
         chatHub.client.onUserDisconnected = function (id, userName) {
-            console.log("onUserDisconnected --> id  : ", id, ", userName  : ", userName);
-            $('#' + id).remove();
-            var ctrId = 'private_' + id;
-            $('#' + ctrId).remove();
-            var disc = $('<div class="disconnect">"' + userName + '" logged off.</div>');
-            $(disc).hide();
-            $('#divusers').prepend(disc);
-            $(disc).fadeIn(200).delay(2000).fadeOut(200);
+          userDisconnection(id, userName);
         }
+
+        
+        //***** REPLACE ABOVE 2 FUNCTIONS WITH updateUsersList( userConnections )
+        chatHub.client.updateUsersList = function (connectedUsers) {
+          //check the incomming users with the user currently displayed on screen 
+          //get list of users on screen
+
+          updateUsersList(connectedUsers);
+
+        }
+
+
+
+        function updateUsersList(newConnectedUsers){
+          
+          console.log("FROM SERVER connectedUsers : ", newConnectedUsers, "---------------------------------------------------------------------");
+          console.log("DOES EXIST ->  program.allUsersConnected ", program.allUsersConnected);
+          //var userListOnScreen = [];
+          //$(".users .user").each(function () {
+          //  var id = $(this).attr("id")
+          //  userListOnScreen.push(id);
+          //});
+          //console.log("userListOnScreen : ", userListOnScreen)
+
+          if (program.allUsersConnected == null) {
+            //set this if not
+            program.allUsersConnected = newConnectedUsers;
+          }
+          else {
+
+            //set new added augmented property as false
+            for (i in newConnectedUsers) {
+              newConnectedUsers[i]["inPreviousUsersConnected"] = false;
+            }
+            console.log("newConnectedUsers : ", newConnectedUsers);
+
+            //loop through users in new list, 
+            for (i in program.allUsersConnected) {
+              var isCurrentInNew = false;
+              for (j in newConnectedUsers) {
+
+                // does old id exist
+                console.log("    '"+ newConnectedUsers[j].ConnectionId +"' == '"+ program.allUsersConnected[i].ConnectionId +"'");
+                if (newConnectedUsers[j].ConnectionId == program.allUsersConnected[i].ConnectionId ) {
+                  isCurrentInNew = true;
+                  newConnectedUsers[j]["inPreviousUsersConnected"] = true;
+                  console.log("newConnectedUsers[j][inPreviousUsersConnected]  ", newConnectedUsers[j]["inPreviousUsersConnected"])
+                }
+
+              }
+              if (!isCurrentInNew) {
+                //ADD TO REMOVE ID LIST
+                console.log("User has logged off : ", newConnectedUsers[i]);
+                userDisconnection(newConnectedUsers[i].ConnectionId, newConnectedUsers[i].UserName)
+              }
+
+            }
+          
+
+            for (i in newConnectedUsers) {
+              if (newConnectedUsers[i]["inPreviousUsersConnected"] == false) {
+                //ADD USER TO ADD LIST
+                console.log("User has logged on : ", newConnectedUsers[i]);
+                AddUser(newConnectedUsers[i].ConnectionId, newConnectedUsers[i].UserName);
+              }
+            }
+
+
+            //find new users
+
+            program.allUsersConnected = newConnectedUsers; //update users at end
+          }
+
+
+        }
+
+
+
 
         chatHub.client.messageReceived = function (userName, message) {
             AddMessage(userName, message);
         }
 
+
+
         //will update client information related to whom is in which group
         chatHub.client.updateGroupInfo = function (groupInfoArrayIn) {
             var groupInfoArray = JSON.parse(groupInfoArrayIn);
-            console.log("groupInfoArray - conversion to json", groupInfoArray); 
+
+            
             for (i in groupInfoArray){ //loop groups
                 for (j in groupInfoArray[i].users) { //loop users in group
                     var adminId = groupInfoArray[i].adminId;
@@ -439,7 +523,7 @@
 
 
 
-
+    // Will show list of people in group for admin group
     function updateAdminGroupDetails() {
         var members = $(".members").data("membersObject");
         var membersHtml = "<ul class='memberContainer'>";
@@ -453,6 +537,7 @@
         $(".memberGroup").html(membersHtml);
     }
 
+    //Add user to users list 
     function AddUser( id, name) {
         var userId = $('#hdId').val();
         var code = "";
@@ -484,6 +569,20 @@
         }
         $("#divusers").append(code);
     }
+
+
+    //update UI to reflect user loggin off
+    function userDisconnection(id, userName) {
+      console.log("onUserDisconnected --> id  : ", id, ", userName  : ", userName);
+      $('#' + id).remove();
+      var ctrId = 'private_' + id;
+      $('#' + ctrId).remove();
+      var disc = $('<div class="disconnect">"' + userName + '" logged off.</div>');
+      $(disc).hide();
+      $('#divusers').prepend(disc);
+      $(disc).fadeIn(200).delay(2000).fadeOut(200);
+    }
+
 
     function AddMessage(userName, message) {
         $('#divChatWindow').append('<div class="message"><span class="userName">' + userName + '</span>: ' + message + '</div>');
