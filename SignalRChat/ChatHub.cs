@@ -56,24 +56,26 @@ namespace SignalRChat
             var id = Context.ConnectionId;
 
 
-            if (!ConnectedUsersDICT.ContainsKey(id))
-            //if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
+            //if (!ConnectedUsersDICT.ContainsKey(id))
+            if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
             {
                 
                 ConnectedUsers.Add(new UserDetail { ConnectionId = id, UserName = userName });
 
-                ConnectedUsersDICT.TryAdd(id, new UserDetail { ConnectionId = id, UserName = userName });
+                //ConnectedUsersDICT.TryAdd(id, new UserDetail { ConnectionId = id, UserName = userName });
 
-                Clients.Caller.onConnected(id, userName, ConnectedUsersDICT, CurrentMessage); // send to caller
+                //Clients.Caller.onConnected(id, userName, ConnectedUsersDICT, CurrentMessage); // send to caller
+                Clients.Caller.onConnected(id, userName, ConnectedUsers, CurrentMessage); // send to caller
+
                 //TODO : need updateUsers(ConnectedUsers) that is refreshed everytime new user added or removed
                 //Clients.AllExcept(id).onNewUserConnected(id, userName); // send to all except caller client
                 //Clients.AllExcept(id).updateUsersList(ConnectedUsers);
-                Clients.AllExcept(id).updateUsersList(ConnectedUsersDICT);
+                Clients.AllExcept(id).updateUsersList(ConnectedUsers);
             }
-            Debug.WriteLine("---------- Current ConnectedUsersDICT ------------");
-            foreach (UserDetail udItem in ConnectedUsersDICT.Values)
+            Debug.WriteLine("---------- Current ConnectedUsers ------------");
+            foreach (UserDetail udItem in ConnectedUsers)
             {
-                Debug.WriteLine(udItem.ConnectionId);
+                Debug.WriteLine("UserName : {0} , ConnectionId : {1}", udItem.UserName , udItem.ConnectionId);
             }
             Debug.WriteLine("-----------------------------------------------");
 
@@ -421,55 +423,130 @@ namespace SignalRChat
             }
 
         }
-       
 
+
+        /*TODO:
+         
+         1) tidy a bit
+         2) refactor and add a polll every 30 secs
+         3) change interlocking on CurrentPollingID to lock on get and set
+         4) testing for groups
+         5) Stop eds bug
+         6) upload and test on AppHarbour
+         
+         */
+
+
+
+        public static HubBlockingCollection<string[]> PollUserList = new HubBlockingCollection<string[]>();
+        public static int CurrentPollingID  = 0; //Interlocked 
+        private object _lock = new object(); 
+
+        public void PollUserUpdate(string id, string pollId){
+            string[] args = { id, pollId };
+            PollUserList.Add(args);
+        }
+
+
+        private void updatePollResultClients(int pollId)
+        {
+            Debug.WriteLine("------------ updatePollResultClients ------------ ");
+            Debug.WriteLine("pollId : " + pollId);
+
+            lock (_lock) {
+
+                //set all to false
+                foreach (UserDetail ud in ConnectedUsers)
+                {
+                    ud.UserPresentInPoll = false;
+                    Debug.WriteLine("       UserName : "+ ud.UserName  );
+                }
+                Debug.WriteLine(" ----------------- ----------------- ----------------- ");
+
+                //mark the ConnectedUsers as connected according to latest poll 
+                foreach(string[] args in PollUserList){
+                    string connectionId = args[0];
+                    int udPollId = 0;
+                    int.TryParse(args[1], out udPollId);
+                    if(udPollId == pollId){
+                        try
+                        {
+                            ConnectedUsers.First(o => o.ConnectionId == connectionId).UserPresentInPoll = true;
+                        }
+                        catch (Exception e) { 
+                            Debug.WriteLine("Error finding item, Error : "+ e.Message);
+                        }
+                    }
+                }
+
+                HubBlockingCollection<UserDetail> tempList = new HubBlockingCollection<UserDetail>();
+
+                //remove ConnectedUsers not present in latest poll
+                foreach (UserDetail ud in ConnectedUsers)
+                {
+                    if (ud.UserPresentInPoll == false)
+                    {
+                        //ConnectedUsers.Remove(ud);
+                        //Debug.WriteLine("Remove UserName : " + ud.UserName);
+                    }
+                    else {
+                        tempList.Add(ud);
+                    }
+                }
+
+                //Interlocked.Exchange(ConnectedUsers, tempList);
+                ConnectedUsers = tempList;
+
+                Debug.WriteLine("------------- ConnectedUsers to Client ------------------");
+                foreach (UserDetail ud in ConnectedUsers)
+                {
+                    Debug.WriteLine("       UserName : " + ud.UserName);
+                }
+                Debug.WriteLine("------------- ConnectedUsers to Client ------------------");
+
+                //send updated group to clients :¬D
+                Clients.All.updateUsersList(ConnectedUsers);
+            }
+        }
 
 
         public override System.Threading.Tasks.Task OnDisconnected(bool stopCalled)
         {
-            //UserDetail item = ConnectedUsers.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
-            UserDetail item;
-            bool takeUserSuccess = false;
+            Debug.WriteLine("Task OnDisconnected");
 
-            while (!takeUserSuccess)
+            //CurrentPollingID += 1;
+            Interlocked.Add(ref CurrentPollingID, 1);
+
+            int instancePollId = CurrentPollingID;
+            Thread.Sleep(1000);
+            Clients.All.pollUserCheck(CurrentPollingID);
+            Debug.WriteLine("instancePollId : " + instancePollId);
+            
+            
+            Thread.Sleep(2000);
+            //if (CurrentPollingID == instancePollId) {
+            if(Interlocked.Equals(CurrentPollingID, instancePollId)){
+                //sendupadate to client
+                this.updatePollResultClients(instancePollId);
+                Debug.WriteLine("updatePollResultClients( instancePollId : " + instancePollId);
+            }
+            
+            
+            Thread.Sleep(1000);
+            //if (CurrentPollingID == instancePollId)
+            if (Interlocked.Equals(CurrentPollingID, instancePollId))
             {
-                string id = Context.ConnectionId;
-                Debug.WriteLine("ConnectedUsers.Remove( id = " + id + ") ");
-                takeUserSuccess = ConnectedUsers.TryTake(out item, 1000);
-
-                ConnectedUsersDICT.TryRemove(id, out item);
-
-                //TODO: evelauate all instances of  ConnectedUsers.Remove(item) and Add()  
-                //TODO : need updateUsers(ConnectedUsers) that is refreshed everytime new user added or removed
-                //Clients.All.onUserDisconnected(id, item.UserName);
-
-                Clients.All.updateUsersList(ConnectedUsers);
-
-
-                foreach (Group group in GroupList)
+                Debug.WriteLine("reset CurrentPollingID ");
+                //CurrentPollingID = 0;
+                Interlocked.Exchange(ref CurrentPollingID, 0);
+                PollUserList.Clear();
+                //is it the 'end of the session', if so then flush objects
+                if (ConnectedUsers.Count == 0)
                 {
-                    if (group.users.FirstOrDefault(o => o.ConnectionId == id) != null)
-                    {
-                        group.removeUserwithId(id); // *TS: TODO - REFACTOR LATER - NOT THREAD SAFE
-                        Groups.Remove(id, group.id);
-                    }
+                    this.GarbagCollect();
                 }
             }
-            UpdateClientGroups();
-            // << REMOVED CONTENT SEE BOTTOM >>
 
-            Debug.WriteLine("---------- Current ConnectedUsers ------------");
-            foreach (UserDetail udItem in ConnectedUsersDICT.Values)
-            {
-                Debug.WriteLine(udItem.ConnectionId);
-            }
-            Debug.WriteLine("-----------------------------------------------");
-
-
-            //is it the 'end of the session', if so then flush objects
-            if (ConnectedUsers.Count == 0) {
-                this.GarbagCollect();
-            }
             return base.OnDisconnected(stopCalled); 
         }
 

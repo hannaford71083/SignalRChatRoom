@@ -21,6 +21,7 @@ namespace SignalRChat.Common
         public string UserName { get; set; }
         public bool SentLatest { get; set; }
         public int KeyPresses { get; set; }
+        public bool UserPresentInPoll { get; set; }
         private PlayerStatus _status;
         private object _lock = new object();
         public PlayerStatus Status

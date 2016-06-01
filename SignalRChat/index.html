@@ -99,7 +99,8 @@
     $(function () {
 
         setScreen("waiting"); //until user details retreived
-      
+        console.log("waiting");
+
         // GLOBAL Declare a proxy to reference the hub.
         chatHub = $.connection.chatHub; 
         registerClientMethods();
@@ -322,6 +323,12 @@
         }
 
         
+
+        chatHub.client.pollUserCheck = function (pollId) {
+          chatHub.server.pollUserUpdate(user.id, pollId);
+        }
+
+
         //***** REPLACE ABOVE 2 FUNCTIONS WITH updateUsersList( userConnections )
         chatHub.client.updateUsersList = function (connectedUsers) {
           //check the incomming users with the user currently displayed on screen 
@@ -359,21 +366,25 @@
             //loop through users in new list, 
             for (i in program.allUsersConnected) {
               var isCurrentInNew = false;
+              var tempJ = 0;
               for (j in newConnectedUsers) {
 
                 // does old id exist
-                console.log("    '"+ newConnectedUsers[j].ConnectionId +"' == '"+ program.allUsersConnected[i].ConnectionId +"'");
+                //console.log("    '"+ newConnectedUsers[j].ConnectionId +"' == '"+ program.allUsersConnected[i].ConnectionId +"'");
                 if (newConnectedUsers[j].ConnectionId == program.allUsersConnected[i].ConnectionId ) {
                   isCurrentInNew = true;
                   newConnectedUsers[j]["inPreviousUsersConnected"] = true;
-                  console.log("newConnectedUsers[j][inPreviousUsersConnected]  ", newConnectedUsers[j]["inPreviousUsersConnected"])
+                  tempJ = j;
+                  //console.log("newConnectedUsers[j][inPreviousUsersConnected]  ", newConnectedUsers[j]["inPreviousUsersConnected"])
                 }
 
               }
               if (!isCurrentInNew) {
                 //ADD TO REMOVE ID LIST
-                console.log("User has logged off : ", newConnectedUsers[i]);
-                userDisconnection(newConnectedUsers[i].ConnectionId, newConnectedUsers[i].UserName)
+                console.log("User has logged off : ", program.allUsersConnected[i]);
+                var id = program.allUsersConnected[i].ConnectionId;
+                var userName = program.allUsersConnected[i].UserName;
+                userDisconnection(id, userName);
               }
 
             }
