@@ -6,14 +6,6 @@ using System.Web;
 namespace SignalRChat.Common
 {
 
-    public enum PlayerStatus
-    {
-        None,
-        OnSplash,
-        Ready
-    };
-
-
     public class UserDetail
     {
         
@@ -26,19 +18,8 @@ namespace SignalRChat.Common
         private object _lock = new object();
         public PlayerStatus Status
         {
-            get
-            {
-                lock (_lock)
-                {
-                    return this._status;
-                }
-            }
-            set
-            {
-                lock(_lock){
-                    this._status = value;
-                }
-            }
+            get{   lock (_lock){   return this._status;     }   }
+            set{    lock(_lock){    this._status = value;   }   }
         }
 
         public UserDetail(){
@@ -46,9 +27,15 @@ namespace SignalRChat.Common
             this.SentLatest = false;
         }
 
-
     }
 
+
+    public enum PlayerStatus
+    {
+        None,
+        OnSplash,
+        Ready
+    };
    
 
 }

@@ -25,35 +25,40 @@ namespace SignalRChat.Common
     public class HubBlockingCollection<T> : BlockingCollection<T>
     {
 
+        private object _lock = new object();
+
+        //Add method tends to work well
         public void Add(T item, int periodInMs = 1000) { //waiting time is 1 sec by default
-            Debug.WriteLine("HubBlockingCollection<"+ item.GetType() +"> - Add() ");
+            //Debug.WriteLine("HubBlockingCollection<"+ item.GetType() +"> - Add() ");
             try
             {
                 if (!this.TryAdd(item))
                 {  
-                    Debug.WriteLine("HubBlockingCollection - Add() -  Add Blocked");
+                    //Debug.WriteLine("HubBlockingCollection - Add() -  Add Blocked");
                 }
                 else {
-                    Debug.WriteLine("HubBlockingCollection - Add() -  Add: " + item.ToString());
-                }
+                   // Debug.WriteLine("HubBlockingCollection - Add() -  Add: " + item.ToString());
+                }                
+
             }
             catch (OperationCanceledException e)
             {
                 Debug.WriteLine("HubBlockingCollection - Add() - Adding canceled message : " + e.Message);
             }
+            
         }
 
-
+        //TODO: Remove does not work well, Refactor needed
         public void Remove(T item, int periodInMs = 1000) {
             CancellationToken ct = new CancellationToken(); //TODO: deal with ct, using 'if(cancelToken.IsCancellationRequested)'
             try
             {
                 if (!this.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
                 {
-                    Debug.WriteLine("HubBlockingCollection - Remove() - Take Blocked");
+                    //Debug.WriteLine("HubBlockingCollection - Remove() - Take Blocked");
                 }
                 else {
-                    Debug.WriteLine("HubBlockingCollection - Remove() - Take : ", item.ToString());
+                    //Debug.WriteLine("HubBlockingCollection - Remove() - Take : ", item.ToString());
                 }
             }
             catch (OperationCanceledException)
@@ -71,12 +76,12 @@ namespace SignalRChat.Common
             {
                 if (!this.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
                 {
-                    Debug.WriteLine("HubBlockingCollection - RemoveAndCallback() -  Take Blocked");
+                    //Debug.WriteLine("HubBlockingCollection - RemoveAndCallback() -  Take Blocked");
                     task.Wait(); //ensure task runs till finish
                 }
                 else
                 {
-                    Debug.WriteLine("HubBlockingCollection - RemoveAndCallback() - Take: "+ item.ToString());
+                    //Debug.WriteLine("HubBlockingCollection - RemoveAndCallback() - Take: " + item.ToString());
                 }
             }
             catch (OperationCanceledException)
@@ -105,8 +110,6 @@ namespace SignalRChat.Common
                 Debug.WriteLine("HubBlockingCollection -  Failed to Clear(), message : "+ e.Message); //TODO: Handle error properly
             }
         }
-
-
 
 
     }

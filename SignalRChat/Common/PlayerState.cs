@@ -36,16 +36,8 @@ namespace SignalRChat.Common
         [JsonIgnore]
         public bool SentLatestFlag
         {
-            set {
-                lock(_lock){
-                    this._sentLatestFlag = value;
-                }
-            }
-            get {
-                lock(_lock){
-                    return this._sentLatestFlag;
-                }
-            }
+            set {   lock(_lock){    this._sentLatestFlag = value;   }   }
+            get {   lock(_lock){    return this._sentLatestFlag;    }   }
         }
         public bool playerLeftGame = false;
             

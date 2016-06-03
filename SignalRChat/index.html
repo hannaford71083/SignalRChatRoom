@@ -227,6 +227,7 @@
         }
     }
 
+    //Makes keys on splash screen flash
     function keyFlashing() {
         keyFlash = setInterval(function () {
             $(".instructions .g").toggleClass("red");
@@ -307,53 +308,22 @@
             updateUsersList(allUsers);
         }
 
-
-
-        // On New User Connected
-        chatHub.client.onNewUserConnected = function (id, name) {
-          console.log("onNewUserConnected --> id : ", id, ", name :", name);
-          if (program.currentPage == "chat") {
-            AddUser(id, name);
-          }
-        }
-
-        // On User Disconnected
-        chatHub.client.onUserDisconnected = function (id, userName) {
-          userDisconnection(id, userName);
-        }
-
-        
-
+        //user replies to poll to register presence
         chatHub.client.pollUserCheck = function (pollId) {
           chatHub.server.pollUserUpdate(user.id, pollId);
         }
 
 
-        //***** REPLACE ABOVE 2 FUNCTIONS WITH updateUsersList( userConnections )
+        //Updates users online list - replaced onNewUserConnected and onUserDisconnected
         chatHub.client.updateUsersList = function (connectedUsers) {
-          //check the incomming users with the user currently displayed on screen 
-          //get list of users on screen
-
           updateUsersList(connectedUsers);
-
         }
 
 
-
+        //updates online users list with object from server
         function updateUsersList(newConnectedUsers){
-          
-          console.log("FROM SERVER connectedUsers : ", newConnectedUsers, "---------------------------------------------------------------------");
-          console.log("DOES EXIST ->  program.allUsersConnected ", program.allUsersConnected);
-          //var userListOnScreen = [];
-          //$(".users .user").each(function () {
-          //  var id = $(this).attr("id")
-          //  userListOnScreen.push(id);
-          //});
-          //console.log("userListOnScreen : ", userListOnScreen)
-
-          if (program.allUsersConnected == null) {
-            //set this if not
-            program.allUsersConnected = newConnectedUsers;
+          if (program.allUsersConnected == null) { 
+            program.allUsersConnected = newConnectedUsers; //set if note instantiated
           }
           else {
 
@@ -361,23 +331,18 @@
             for (i in newConnectedUsers) {
               newConnectedUsers[i]["inPreviousUsersConnected"] = false;
             }
-            console.log("newConnectedUsers : ", newConnectedUsers);
 
             //loop through users in new list, 
             for (i in program.allUsersConnected) {
               var isCurrentInNew = false;
               var tempJ = 0;
               for (j in newConnectedUsers) {
-
                 // does old id exist
-                //console.log("    '"+ newConnectedUsers[j].ConnectionId +"' == '"+ program.allUsersConnected[i].ConnectionId +"'");
                 if (newConnectedUsers[j].ConnectionId == program.allUsersConnected[i].ConnectionId ) {
                   isCurrentInNew = true;
                   newConnectedUsers[j]["inPreviousUsersConnected"] = true;
                   tempJ = j;
-                  //console.log("newConnectedUsers[j][inPreviousUsersConnected]  ", newConnectedUsers[j]["inPreviousUsersConnected"])
                 }
-
               }
               if (!isCurrentInNew) {
                 //ADD TO REMOVE ID LIST
@@ -388,28 +353,18 @@
               }
 
             }
-          
 
             for (i in newConnectedUsers) {
               if (newConnectedUsers[i]["inPreviousUsersConnected"] == false) {
-                //ADD USER TO ADD LIST
-                console.log("User has logged on : ", newConnectedUsers[i]);
                 AddUser(newConnectedUsers[i].ConnectionId, newConnectedUsers[i].UserName);
               }
             }
-
-
-            //find new users
-
             program.allUsersConnected = newConnectedUsers; //update users at end
+
           }
-
-
         }
 
-
-
-
+        //updates message sent
         chatHub.client.messageReceived = function (userName, message) {
             AddMessage(userName, message);
         }
@@ -471,6 +426,7 @@
             updateAdminGroupDetails();
         }
 
+        //Private message opens a private message window for idividual chat
         chatHub.client.sendPrivateMessage = function (windowId, fromUserName, message) {
             var ctrId = 'private_' + windowId;
             if ($('#' + ctrId).length == 0) {
@@ -482,6 +438,7 @@
             $('#' + ctrId).find('#divMessage').scrollTop(height);
         }
 
+        //Show splash screen
         chatHub.client.showSplash = function () {
             $(".readyButton").show();
             $(".waiting").hide();
@@ -499,7 +456,8 @@
 
 
         // ----- GAME FUNCTIONS -----
-
+        
+        //show game screen
         chatHub.client.showGameScreen = function () {
             setScreen("game");
             canvasGame();
@@ -508,8 +466,6 @@
         chatHub.client.updateCountdown = function (time) {
             game.countdownTime = parseInt(time);
         }
-
-
 
         chatHub.client.clientEndGame = function (listOPlayers) {
             game.endGame(listOPlayers);
