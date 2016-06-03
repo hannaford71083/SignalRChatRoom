@@ -13,6 +13,8 @@ namespace SignalRChat.Common
         public HubBlockingCollection<UserDetail> users = new HubBlockingCollection<UserDetail>();
         
         private object _lock = new object();
+        private object _usersLock = new object();
+
         private string _adminId;
         public string adminId
         {
@@ -48,9 +50,30 @@ namespace SignalRChat.Common
         }
 
         //removes user from group with a specific ID
-        public void removeUserwithId(string id)
+        public bool removeUserwithId(string id)
         {
-            users.Remove(users.FirstOrDefault(o => o.ConnectionId == id));
+            //users.Remove(users.FirstOrDefault(o => o.ConnectionId == id));
+            HubBlockingCollection<UserDetail> newUsers = new HubBlockingCollection<UserDetail>();
+            bool modified = false;
+            lock (this._usersLock)
+            {
+                Debug.WriteLine("--------- Remove User -----------");
+                foreach (UserDetail user in this.users)
+                {
+                    if (user.ConnectionId != id) { 
+                        newUsers.Add(user);
+                        Debug.WriteLine("User Added id : " + user.ConnectionId);
+                    }
+                    else { modified = true; }
+                }
+                if (modified == true)
+                {
+                    this.users = newUsers;
+                    
+                }
+                return modified;
+            }
+            return false;
         }
         
     }

@@ -47,8 +47,7 @@ namespace SignalRChat.Common
                 }
             }
         }
-        
-        
+        public bool playerLeftGame = false;
             
         internal void UpdateClicks(PlayerState playerState)
         {

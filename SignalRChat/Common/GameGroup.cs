@@ -42,7 +42,11 @@ namespace SignalRChat.Common
             //ChatHub.logger.Debug("------------------ Start ----------------");
             foreach (var item in PlayerStates)
             {
-                if (!PlayerStates[item.Key].SentLatestFlagRead()) { // one of the flags is false so still waiting
+                if (PlayerStates[item.Key].playerLeftGame)
+                {
+                    
+                }
+                else if(!PlayerStates[item.Key].SentLatestFlagRead() ) { // one of the flags is false so still waiting
                     //ChatHub.logger.Debug("is false, so shouldn't return True!!");
                     allready = false; 
                 }

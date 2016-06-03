@@ -525,8 +525,10 @@
         }
 
 
-        chatHub.client.startGameError = function () {
-          alert("I'm afraid the server is busy with two many games at the moment, please try again in a minute!");
+        chatHub.client.clientError = function (heading, message) {
+          var text = "------------ " + heading + " ----------------\n\n";
+          text += message;
+          alert(text);
         }
 
 

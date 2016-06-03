@@ -32,12 +32,11 @@ namespace SignalRChat
         static ConcurrentDictionary<string, GameGroup>  GameGroups      = new ConcurrentDictionary<string, GameGroup>();
         static ConcurrentQueue<GameGroup>           CountDownQueue      = new ConcurrentQueue<GameGroup>();
         static System.Timers.Timer                  CountdownTimerLoop  = null; //Static timer acts as Clock cycle for instances of Group countdown
+        static System.Timers.Timer RePollLoop = null; //Every 40 secs Repolls clients for updated ConnectedUsers
 
-        public static Logger logger = LogManager.GetCurrentClassLogger();
+        public static Logger logger = LogManager.GetCurrentClassLogger(); // for Console2Log
         
         #endregion
-
-
 
 
 
@@ -47,6 +46,8 @@ namespace SignalRChat
         //used for connection and reconnection
         public void Connect(string userName)
         {
+
+            string htmlEncodedUserName = HttpUtility.HtmlEncode(userName);
 
             DateTime rightNow = new DateTime();
             rightNow = DateTime.Now;
@@ -59,18 +60,19 @@ namespace SignalRChat
             //if (!ConnectedUsersDICT.ContainsKey(id))
             if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
             {
-                
-                ConnectedUsers.Add(new UserDetail { ConnectionId = id, UserName = userName });
+
+                ConnectedUsers.Add(new UserDetail { ConnectionId = id, UserName = htmlEncodedUserName });
 
                 //ConnectedUsersDICT.TryAdd(id, new UserDetail { ConnectionId = id, UserName = userName });
 
                 //Clients.Caller.onConnected(id, userName, ConnectedUsersDICT, CurrentMessage); // send to caller
-                Clients.Caller.onConnected(id, userName, ConnectedUsers, CurrentMessage); // send to caller
+                Clients.Caller.onConnected(id, htmlEncodedUserName, ConnectedUsers, CurrentMessage); // send to caller
 
                 //TODO : need updateUsers(ConnectedUsers) that is refreshed everytime new user added or removed
                 //Clients.AllExcept(id).onNewUserConnected(id, userName); // send to all except caller client
                 //Clients.AllExcept(id).updateUsersList(ConnectedUsers);
                 Clients.AllExcept(id).updateUsersList(ConnectedUsers);
+                this.pollProcess();
             }
             Debug.WriteLine("---------- Current ConnectedUsers ------------");
             foreach (UserDetail udItem in ConnectedUsers)
@@ -80,6 +82,7 @@ namespace SignalRChat
             Debug.WriteLine("-----------------------------------------------");
 
             this.StartTimerLoop();
+            this.StartRePollLoop();
         }
 
 
@@ -178,11 +181,14 @@ namespace SignalRChat
 
         public void SendMessageToAll(string userName, string message)
         {
+            string htmlEncodedMessage = HttpUtility.HtmlEncode(message);
+            
             // store last 100 messages in cache
-            AddMessageinCache(userName, message); 
+            AddMessageinCache(userName, htmlEncodedMessage); 
             // Broad cast message
-            Clients.All.messageReceived(userName, message);
+            Clients.All.messageReceived(userName, htmlEncodedMessage);
         }
+
 
 
         public void SendPrivateMessage(string toUserId, string message)
@@ -233,14 +239,23 @@ namespace SignalRChat
 
         // *TS: MEDIUM
         public void AddUserToGroup(string userId, string adminID) {
-            Debug.WriteLine("ChatHub - AddUserToGroup() - user ID: " + userId + ", admin ID: " + adminID);  
-            //loop through all groups 
-            GroupList.FirstOrDefault(o => o.getAdminId() == adminID).addUserDetail(
-                //add user detail that = userID
-                ConnectedUsers.FirstOrDefault(o => o.ConnectionId == userId)
-                );
-            Groups.Add(userId, GroupList.FirstOrDefault(o => o.getAdminId() == adminID ).id ); //SiganalR Group
-            this.UpdateClientGroups();
+
+
+            if (GroupList.FirstOrDefault(o => o.getAdminId() == adminID).users.Count() >= 4)
+            {
+                Clients.Caller.clientError("Add User Error", "Group already has max memebers");
+            }
+            else { 
+                Debug.WriteLine("ChatHub - AddUserToGroup() - user ID: " + userId + ", admin ID: " + adminID);  
+                //loop through all groups 
+                GroupList.FirstOrDefault(o => o.getAdminId() == adminID).addUserDetail(
+                    //add user detail that = userID
+                    ConnectedUsers.FirstOrDefault(o => o.ConnectionId == userId)
+                    );
+                Groups.Add(userId, GroupList.FirstOrDefault(o => o.getAdminId() == adminID ).id ); //SiganalR Group
+                this.UpdateClientGroups();
+            }
+            
         }
 
         public void SignalStartGame( string groupID)
@@ -249,7 +264,7 @@ namespace SignalRChat
             int maxConnectionsAllowed = 100;  //max connections as obtained from testing on same machine
             if (GameGroups.Count > maxConnectionsAllowed)
             {
-                Clients.Caller.startGameError();
+                Clients.Caller.clientError("Start Game Error","I'm afraid the server is busy with two many games at the moment, please try again in a minute!");
                 return;
             }
 
@@ -317,7 +332,7 @@ namespace SignalRChat
         // *TS: DONE
         private void StartCountDown(GameGroup gg) {
             while(!CountDownQueue.Contains(gg)) {
-                CountDownQueue.Enqueue(gg);            
+                CountDownQueue.Enqueue(gg);
             }
         }
 
@@ -343,6 +358,25 @@ namespace SignalRChat
             }
         }
 
+        private void StartRePollLoop()
+        {
+            //initialise only one timer loop
+            if (RePollLoop == null)
+            {
+                Debug.WriteLine("CREATING TIMER");
+                RePollLoop = new System.Timers.Timer(40000);  //40secs
+                RePollLoop.Elapsed += (sender, e) => RePollLoopExecute(sender, e, this);
+                RePollLoop.Enabled = true; // Enable it
+            }
+            else
+            {
+                Debug.WriteLine("TIMER ALREADY EXISTS");  
+            }
+        }
+        
+
+
+
         // *TS: TODO
         //loops through all groups, sends update times to affected groups
         private static void CountDownLoopExecute(object sender, ElapsedEventArgs e, ChatHub ch)
@@ -361,6 +395,11 @@ namespace SignalRChat
                 }
             }
 
+        }
+
+        private static void RePollLoopExecute(object sender, ElapsedEventArgs e, ChatHub ch)
+        {
+            ch.pollProcess();
         }
 
 
@@ -408,7 +447,7 @@ namespace SignalRChat
             bool areAllFinished = true;
             foreach(PlayerState ps in GameGroups[playerState.GroupId].PlayerStates.Values)
             {
-                if (ps.GetFinishTimeMS() <= 0)
+                if (ps.GetFinishTimeMS() <= 0 && !ps.playerLeftGame )
                 {
                     areAllFinished = false;
                 }
@@ -427,20 +466,46 @@ namespace SignalRChat
 
         /*TODO:
          
-         1) tidy a bit
-         2) refactor and add a polll every 30 secs
-         3) change interlocking on CurrentPollingID to lock on get and set
-         4) testing for groups
-         5) Stop eds bug
-         6) upload and test on AppHarbour
-         
+         (DONE) 1) change interlocking on CurrentPollingID to lock on get and set 
+         *  - ??? no threadsafety for refreshing list 
+         (DONE) 2) refactor and add a polll every 30 secs
+         (DONE) 4) testing for groups
+         (DONE) 5) Stop eds bug
+         (DONE - BASIC) 6) send errors back to users (Could be done in all relevent senarios)
+         7) upload and test on AppHarbour
+         8) replay function
+         * - Make cookie session work with new code 
+            - Need to set connectionID for context
+         9) smooter scrolling
+         ) tidy a bit
+         ) Limit userName length to ~20 charaters, also change responsiveness of chat window
+         * 
          */
 
 
 
+
+
         public static HubBlockingCollection<string[]> PollUserList = new HubBlockingCollection<string[]>();
-        public static int CurrentPollingID  = 0; //Interlocked 
-        private object _lock = new object(); 
+        private object _lock = new object();
+
+        public static object cpLock = new object();
+        private static int _currentPollingID = 0;
+        public static int CurrentPollingID  { //enusre threadsafty of value
+            set {
+                lock (cpLock)
+                {
+                    _currentPollingID = value;
+                }
+            }
+            get {
+                lock (cpLock)
+                {
+                    return _currentPollingID;
+                }
+            }
+        }
+        
 
         public void PollUserUpdate(string id, string pollId){
             string[] args = { id, pollId };
@@ -453,7 +518,7 @@ namespace SignalRChat
             Debug.WriteLine("------------ updatePollResultClients ------------ ");
             Debug.WriteLine("pollId : " + pollId);
 
-            lock (_lock) {
+            lock (this._lock) {
 
                 //set all to false
                 foreach (UserDetail ud in ConnectedUsers)
@@ -486,6 +551,8 @@ namespace SignalRChat
                 {
                     if (ud.UserPresentInPoll == false)
                     {
+                        UserDetail userToRemove = ud;
+                        this.removeUserFromAllGroups(userToRemove);
                         //ConnectedUsers.Remove(ud);
                         //Debug.WriteLine("Remove UserName : " + ud.UserName);
                     }
@@ -506,39 +573,61 @@ namespace SignalRChat
 
                 //send updated group to clients :¬D
                 Clients.All.updateUsersList(ConnectedUsers);
+                this.UpdateClientGroups();
             }
         }
 
-
-        public override System.Threading.Tasks.Task OnDisconnected(bool stopCalled)
+        private void removeUserFromAllGroups(UserDetail userToRemove)
         {
-            Debug.WriteLine("Task OnDisconnected");
+            string userId = userToRemove.ConnectionId;
+            string groupId = "";
+            foreach(Group group in GroupList){
+                if(group.users.Contains(userToRemove)){
+                    group.removeUserwithId(userId);
+                    try
+                    {
+                        GameGroups[group.id].PlayerStates[userId].playerLeftGame = true;
+                        GameGroups[group.id].PlayerStates[userId].FinishTimeMS = 100000; //if user leaves sets time to 100 secs
+                    }
+                    catch (Exception e) {
+                        Debug.WriteLine("Key Not Found Exeception : "+ e.Message);
+                    }
+                }
+            }
 
-            //CurrentPollingID += 1;
-            Interlocked.Add(ref CurrentPollingID, 1);
+        }
+
+
+        private void pollProcess() {
+
+            Debug.WriteLine("---- pollProcess() ----");
+
+            CurrentPollingID += 1;
+            //Interlocked.Add(ref CurrentPollingID, 1);
 
             int instancePollId = CurrentPollingID;
             Thread.Sleep(1000);
             Clients.All.pollUserCheck(CurrentPollingID);
             Debug.WriteLine("instancePollId : " + instancePollId);
-            
-            
+
+
             Thread.Sleep(2000);
-            //if (CurrentPollingID == instancePollId) {
-            if(Interlocked.Equals(CurrentPollingID, instancePollId)){
+            if (CurrentPollingID == instancePollId)
+            {
+                //if(Interlocked.Equals(CurrentPollingID, instancePollId)){
                 //sendupadate to client
                 this.updatePollResultClients(instancePollId);
                 Debug.WriteLine("updatePollResultClients( instancePollId : " + instancePollId);
             }
-            
-            
+
+
             Thread.Sleep(1000);
-            //if (CurrentPollingID == instancePollId)
-            if (Interlocked.Equals(CurrentPollingID, instancePollId))
+            if (CurrentPollingID == instancePollId)
+            //if (Interlocked.Equals(CurrentPollingID, instancePollId))
             {
                 Debug.WriteLine("reset CurrentPollingID ");
-                //CurrentPollingID = 0;
-                Interlocked.Exchange(ref CurrentPollingID, 0);
+                CurrentPollingID = 0;
+                //Interlocked.Exchange(ref CurrentPollingID, 0);
                 PollUserList.Clear();
                 //is it the 'end of the session', if so then flush objects
                 if (ConnectedUsers.Count == 0)
@@ -546,6 +635,17 @@ namespace SignalRChat
                     this.GarbagCollect();
                 }
             }
+        
+        
+        }
+
+
+
+        public override System.Threading.Tasks.Task OnDisconnected(bool stopCalled)
+        {
+            Debug.WriteLine("Task OnDisconnected");
+
+            this.pollProcess();
 
             return base.OnDisconnected(stopCalled); 
         }
@@ -573,6 +673,9 @@ namespace SignalRChat
             //CountdownTimerLoop.Stop();
             CountdownTimerLoop.Dispose();
             CountdownTimerLoop = null;
+            RePollLoop.Dispose();
+            RePollLoop = null;
+
         }
 
 
