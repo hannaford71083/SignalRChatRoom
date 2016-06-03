@@ -47,6 +47,11 @@ namespace SignalRChat
         public void Connect(string userName)
         {
 
+            if (userName.Length > 30 ) {
+                Clients.Caller.clientError("User name too long", "The name you submitted was " + userName.Length.ToString() + " , the limit is 30 charters. Please type another."  );
+                return;
+            }
+
             string htmlEncodedUserName = HttpUtility.HtmlEncode(userName);
 
             DateTime rightNow = new DateTime();
@@ -472,13 +477,16 @@ namespace SignalRChat
          (DONE) 4) testing for groups
          (DONE) 5) Stop eds bug
          (DONE - BASIC) 6) send errors back to users (Could be done in all relevent senarios)
+         6a) tidy a bit
+         6b) Limit userName length to ~20 charaters (disallow rudewords), also change responsiveness of chat window
          7) upload and test on AppHarbour
+         
          8) replay function
          * - Make cookie session work with new code 
             - Need to set connectionID for context
          9) smooter scrolling
-         ) tidy a bit
-         ) Limit userName length to ~20 charaters, also change responsiveness of chat window
+         
+         
          * 
          */
 
@@ -515,8 +523,8 @@ namespace SignalRChat
 
         private void updatePollResultClients(int pollId)
         {
-            Debug.WriteLine("------------ updatePollResultClients ------------ ");
-            Debug.WriteLine("pollId : " + pollId);
+            //Debug.WriteLine("------------ updatePollResultClients ------------ ");
+            //Debug.WriteLine("pollId : " + pollId);
 
             lock (this._lock) {
 
@@ -524,9 +532,9 @@ namespace SignalRChat
                 foreach (UserDetail ud in ConnectedUsers)
                 {
                     ud.UserPresentInPoll = false;
-                    Debug.WriteLine("       UserName : "+ ud.UserName  );
+                    //Debug.WriteLine("       UserName : "+ ud.UserName  );
                 }
-                Debug.WriteLine(" ----------------- ----------------- ----------------- ");
+                //Debug.WriteLine(" ----------------- ----------------- ----------------- ");
 
                 //mark the ConnectedUsers as connected according to latest poll 
                 foreach(string[] args in PollUserList){
@@ -564,12 +572,12 @@ namespace SignalRChat
                 //Interlocked.Exchange(ConnectedUsers, tempList);
                 ConnectedUsers = tempList;
 
-                Debug.WriteLine("------------- ConnectedUsers to Client ------------------");
-                foreach (UserDetail ud in ConnectedUsers)
-                {
-                    Debug.WriteLine("       UserName : " + ud.UserName);
-                }
-                Debug.WriteLine("------------- ConnectedUsers to Client ------------------");
+                //Debug.WriteLine("------------- ConnectedUsers to Client ------------------");
+                //foreach (UserDetail ud in ConnectedUsers)
+                //{
+                //    Debug.WriteLine("       UserName : " + ud.UserName);
+                //}
+                //Debug.WriteLine("------------- ConnectedUsers to Client ------------------");
 
                 //send updated group to clients :¬D
                 Clients.All.updateUsersList(ConnectedUsers);
@@ -600,7 +608,7 @@ namespace SignalRChat
 
         private void pollProcess() {
 
-            Debug.WriteLine("---- pollProcess() ----");
+            //Debug.WriteLine("---- pollProcess() ----");
 
             CurrentPollingID += 1;
             //Interlocked.Add(ref CurrentPollingID, 1);
@@ -608,7 +616,7 @@ namespace SignalRChat
             int instancePollId = CurrentPollingID;
             Thread.Sleep(1000);
             Clients.All.pollUserCheck(CurrentPollingID);
-            Debug.WriteLine("instancePollId : " + instancePollId);
+            //Debug.WriteLine("instancePollId : " + instancePollId);
 
 
             Thread.Sleep(2000);
@@ -617,7 +625,7 @@ namespace SignalRChat
                 //if(Interlocked.Equals(CurrentPollingID, instancePollId)){
                 //sendupadate to client
                 this.updatePollResultClients(instancePollId);
-                Debug.WriteLine("updatePollResultClients( instancePollId : " + instancePollId);
+                //Debug.WriteLine("updatePollResultClients( instancePollId : " + instancePollId);
             }
 
 
@@ -625,7 +633,7 @@ namespace SignalRChat
             if (CurrentPollingID == instancePollId)
             //if (Interlocked.Equals(CurrentPollingID, instancePollId))
             {
-                Debug.WriteLine("reset CurrentPollingID ");
+                //Debug.WriteLine("reset CurrentPollingID ");
                 CurrentPollingID = 0;
                 //Interlocked.Exchange(ref CurrentPollingID, 0);
                 PollUserList.Clear();
