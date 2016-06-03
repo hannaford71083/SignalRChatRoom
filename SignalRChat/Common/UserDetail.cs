@@ -8,9 +8,10 @@ namespace SignalRChat.Common
 
     public class UserDetail
     {
-        
+        public string PersistedId { get; set; }
         public string ConnectionId { get; set; }
         public string UserName { get; set; }
+        
         public bool SentLatest { get; set; }
         public int KeyPresses { get; set; }
         public bool UserPresentInPoll { get; set; }

@@ -68,7 +68,7 @@
     function Program() {
         this.groups = {};
         this.currentUser;
-        this.currentPage = "login";
+        this.currentPage = "none";
         this.allUsersConnected = null;
     }
 
@@ -90,7 +90,7 @@
 
     // ----------END--------------  CLIENT OBJECTS ---------------------END------------------------
 
-    
+
 
 
 
@@ -108,55 +108,36 @@
         $.connection.hub.start().done(function () {
           console.log("CONNECTION START");
           registerEvents();
-          userManagement();
+          connectionManagement();
         });
 
         $.connection.hub.reconnected(function () {
+          console.log("reconnected!");
           registerEvents();
-          userManagement();
+          connectionManagement();
         });
 
-
         //have to log off and on again
-        //$.connection.hub.reconnecting(function () {
-        //  console.log("reconnecting!");
-        //  //http://www.asp.net/signalr/overview/guide-to-the-api/handling-connection-lifetime-events
-        //  //http://www.asp.net/signalr/overview/guide-to-the-api/mapping-users-to-connections
-        //  //chatHub.stop();
+        $.connection.hub.reconnecting(function () {
+          console.log("reconnecting!");
+          //  //http://www.asp.net/signalr/overview/guide-to-the-api/handling-connection-lifetime-events
+          //  //http://www.asp.net/signalr/overview/guide-to-the-api/mapping-users-to-connections
+          //  //chatHub.stop();
           
-        //});
+        });
 
     });
 
 
-    //Attempts to retreive User Details from Cookie (possibly extended to retreive details from DB as well :¬D )
-    function userManagement() {
-      setScreen("login"); // REMOVE THIS WHEN ADDING USER MANAGEMENT BACK
-      //DISABLE
-      /*
-      var cookieName = "chatRoomUserDetails";
-      if (getCookie(cookieName) == "") {
-        setScreen("login"); //login screen needs to set cookie
-      }
-      else {
-        var cookieObj = JSON.parse(getCookie(cookieName)); //check if cookie, if so then retreive and use that user name
-        chatHub.server.connect(cookieObj.userName);
-      }
-      */
-    }
 
-    
     //may add further details in future to this if needed to access DB etc
-    function addUserDetailsToCookie(id, userName) {
-      //DISABLE
-      /*
+    function addUserDetailsToCookie(userName, connectionId, persistedId) {
       var cookieName = "chatRoomUserDetails";
       var expieryInDays = 4;
-      var jsonObjString = "{  \"userName\": \"" + userName + "\" }";  //  \"id\": \"" + id + "\",
+      var jsonObjString = "{  \"userName\": \"" + userName + "\",  \"connectionId\": \"" + connectionId + "\",  \"persistedId\": \"" + persistedId + "\"    }";
       setCookie(cookieName, jsonObjString, expieryInDays);
-      */
     }
-
+    
 
     function setCookie(cname, cvalue, exdays) {
       var d = new Date();
@@ -194,6 +175,7 @@
                 $("#header").show();
                 break
             case "login":
+              program.currentPage = "login";
                 $("#header").show();
                 $("#divLogin").show();
                 break;
@@ -217,6 +199,7 @@
             case "results":
                 program.currentPage = "results";
                 $("#divResults").show();
+                console.log("user.id : ", user.id);
                 $(".backToChat").on("click tap", function () {
                     location.reload();
                 });
@@ -244,8 +227,9 @@
     function registerEvents() {
       $("#btnStartChat").click(function () {
         var name = $("#txtNickName").val();
+        var connectionId = $.connection.hub.id;
         if (name.length > 0) {
-          chatHub.server.connect(name);
+          chatHub.server.login(name, connectionId);
         }
         else {
           alert("Please enter name");
@@ -278,34 +262,58 @@
 
 
 
+
+    //Attempts to retreive User Details from Cookie (possibly extended to retreive details from DB as well :¬D )
+    function connectionManagement() {
+     
+      var connectionId = $.connection.hub.id;
+
+      // ----- INITIALISE -----
+      program = new Program();
+      user = new User();
+      user.id = connectionId;
+      group = new Group();
+
+
+      var cookieName = "chatRoomUserDetails";
+      if (getCookie(cookieName) == "") {
+        setScreen("login"); //login screen needs to set cookie
+      }
+      else {
+        console.log("Attempting to Retreive COOKIE!!!");
+        //Connect to server retreived cookie details
+        var cookieObj = JSON.parse(getCookie(cookieName)); //check if cookie, if so then retreive and use that user name
+        // has following fields: cookieObj.userName   cookieObj.connectionId  cookieObj.persistedId
+        console.log("cookieObj : ", cookieObj);
+        chatHub.server.connect(cookieObj.persistedId, connectionId, cookieObj.userName);
+      }
+
+    }
+
+
     function registerClientMethods() {
 
         // Calls when user successfully logged in
-        chatHub.client.onConnected = function (id, userName, allUsers, messages) {
-            addUserDetailsToCookie(id, userName);
-            console.log("id : ", id, ",  userName : ", userName, " , allUsers :  ", allUsers, " ,  messages : ", messages);
+      chatHub.client.onLoggedIn = function (id, userName, persistedId, allUsers, messages) {
+          addUserDetailsToCookie(userName, id, persistedId)
+          console.log("connectionId : ", id, ", persistedId : ", persistedId, ",   userName : ", userName, " , allUsers :  ", allUsers, " ,  messages : ", messages);
+          user.name = userName;
+          setScreen("chat");
+          //update DOM user info entry
+          $('#hdId').val(id);
+          $('#hdUserName').val(userName);
+          $('#spanUser').html(userName);
+          chatHub.server.updateClientGroups();
 
-            // ----- INITIALISE -----
-            program = new Program();
-            user = new User(); 
-            user.id = id;
-            user.name = userName;
-            group = new Group();
-            setScreen("chat");
-            //update DOM user info entry
-            $('#hdId').val(id);
-            $('#hdUserName').val(userName);
-            $('#spanUser').html(userName);
-            chatHub.server.updateClientGroups();
-            // Add All Users
-            for (i = 0; i < allUsers.length; i++) {
-                AddUser( allUsers[i].ConnectionId, allUsers[i].UserName);
-            }
-            // Add Existing Messages
-            for (i = 0; i < messages.length; i++) {
-                AddMessage(messages[i].UserName, messages[i].Message);
-            }
-            updateUsersList(allUsers);
+          // Add All Users
+          for (i = 0; i < allUsers.length; i++) {
+              AddUser( allUsers[i].ConnectionId, allUsers[i].UserName);
+          }
+          // Add Existing Messages
+          for (i = 0; i < messages.length; i++) {
+              AddMessage(messages[i].UserName, messages[i].Message);
+          }
+          updateUsersList(allUsers);
         }
 
         //user replies to poll to register presence
@@ -414,10 +422,7 @@
                             $("#" + adminId).find(".join").hide();
                             $("#" + adminId).find(".joined").hide();
                         }
-
                     }
-
-                    
 
 
                 }//j
@@ -472,14 +477,11 @@
         }
         
 
-
-
         chatHub.client.updateGame = function (listOPlayers) {
             for (i in game.players) {
                 game.players[i].syncObject = listOPlayers.PlayerStates[game.players[i].id];
             }
         }
-
 
         chatHub.client.clientError = function (heading, message) {
           var text = "------------ " + heading + " ----------------\n\n";
@@ -554,9 +556,9 @@
 
 
     function AddMessage(userName, message) {
-        $('#divChatWindow').append('<div class="message"><span class="userName">' + userName + '</span>: ' + message + '</div>');
-        var height = $('#divChatWindow')[0].scrollHeight;
-        $('#divChatWindow').scrollTop(height);
+      $('#divChatWindow').append('<div class="message"><span class="userName">' + userName + '</span>: ' + message + '</div>');
+      var height = $('#divChatWindow')[0].scrollHeight;
+      $('#divChatWindow').scrollTop(height);
     }
 
 

@@ -20,6 +20,7 @@ namespace SignalRChat
     [HubName("chatHub")]
     public class ChatHub : Hub
     {
+
         #region Data Members
 
 
@@ -60,8 +61,67 @@ namespace SignalRChat
         // implements users going from screen to screen etc
         #region Lifecycle Methods
 
+
+
+
+        //First Method accessed imediately
+        public void Connect(string persistedId, string connectionId, string userName)
+        {
+            UserDetail user;
+
+            if (ConnectedUsers.Count(o => o.PersistedId == persistedId) > 0) //user in ConnectedUsers
+            {
+                //Would be if logged off and back on without signalR restart
+                user = ConnectedUsers.FirstOrDefault(o => o.PersistedId == persistedId);
+                user.ConnectionId = connectionId; //will have new ConnectionId as created be IConnectionFactory
+            }
+            else {
+                //would be if logged off and on between a restart (and has cleared connected users)
+                 user = this.createUserProfile(connectionId, userName, persistedId);
+            }
+
+            Clients.Caller.onLoggedIn(
+                user.ConnectionId,
+                user.UserName,
+                user.PersistedId,
+                ConnectedUsers,
+                CurrentMessage
+                ); // send to caller
+
+            Clients.AllExcept(user.ConnectionId).updateUsersList(ConnectedUsers);
+            this.pollProcess();
+            this.StartTimerLoop();
+            this.StartRePollLoop();
+        }
+
+
+
+        private UserDetail createUserProfile(string id, string htmlEncodedUserName)
+        {
+            string persitedId = this.getPersitedId();
+            //get a persistedId
+            UserDetail newUser = (new UserDetail { PersistedId = persitedId, ConnectionId = id, UserName = htmlEncodedUserName });
+            ConnectedUsers.Add(newUser);
+
+            return newUser;
+        }
+
+        private UserDetail createUserProfile(string id, string htmlEncodedUserName, string persitedId)
+        {
+            UserDetail newUser = (new UserDetail { PersistedId = persitedId, ConnectionId = id, UserName = htmlEncodedUserName });
+            ConnectedUsers.Add(newUser);
+            return newUser;
+        }
+
+        //PLUGIN DB Here call DB to get persitedId when a new row created
+        private string getPersitedId() {
+            string persitedId = Guid.NewGuid().ToString();
+            return persitedId;
+        }
+
+
         //used for connection and reconnection
-        public void Connect(string userName)
+        public void Login(string userName, string connectionId)
         {
 
             if (userName.Length > 30 ) {
@@ -75,15 +135,28 @@ namespace SignalRChat
             //Init Trace for logging
             Debug.Listeners.Add(new TextWriterTraceListener(Console.Out));
             Debug.WriteLine("ChatHub - Connect() at {0}", rightNow);
-            var id = Context.ConnectionId;
+            //var id = Context.ConnectionId;
+            var id = connectionId;
 
+            //if user does not already exist
             if (ConnectedUsers.Count(x => x.ConnectionId == id) == 0)
             {
-                ConnectedUsers.Add(new UserDetail { ConnectionId = id, UserName = htmlEncodedUserName });
-                Clients.Caller.onConnected(id, htmlEncodedUserName, ConnectedUsers, CurrentMessage); // send to caller
+
+                UserDetail  newUser = this.createUserProfile( id, htmlEncodedUserName);
+
+                Clients.Caller.onLoggedIn(
+                    newUser.ConnectionId,
+                    newUser.UserName, 
+                    newUser.PersistedId, 
+                    ConnectedUsers, 
+                    CurrentMessage
+                    ); // send to caller
+
                 Clients.AllExcept(id).updateUsersList(ConnectedUsers);
                 this.pollProcess();
             }
+
+
             //Debug.WriteLine("---------- Current ConnectedUsers ------------");
             //foreach (UserDetail udItem in ConnectedUsers)
             //{
@@ -94,6 +167,7 @@ namespace SignalRChat
             this.StartTimerLoop();
             this.StartRePollLoop();
         }
+
 
         public void SignalStartGame( string groupID)
         {
@@ -145,7 +219,8 @@ namespace SignalRChat
             if(!GameGroups.TryAdd(groupID, newGroup)){ failedAdd = true; } //MEDIUM threadsafe Risk
             
             if(failedAdd){
-                Clients.Group(groupID).clientError("Couldn't Add Player", "Failed to Add a player(s) to the game"); //failed to add player to group or group list
+                //Clients.Group(groupID).clientError("Couldn't Add Player", "Failed to Add a player(s) to the game"); //failed to add player to group or group list
+                Debug.WriteLine("failed to add player to group or group list");
             }
             else{
                 Clients.Group(groupID).showGameScreen();
@@ -188,13 +263,14 @@ namespace SignalRChat
 
         public override System.Threading.Tasks.Task OnDisconnected(bool stopCalled)
         {
-            Debug.WriteLine("Task OnDisconnected");
+            Debug.WriteLine("Task OnDisconnected - Context.ConnectionID : " + Context.ConnectionId);
             this.pollProcess();
             return base.OnDisconnected(stopCalled);
         }
 
         public override System.Threading.Tasks.Task OnReconnected()
         {
+            Debug.WriteLine("Task OnReconnected - Context.ConnectionID : "+ Context.ConnectionId );
             return base.OnReconnected();
         }
 

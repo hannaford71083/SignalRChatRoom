@@ -6,23 +6,21 @@
 
 TODO:
 
- 6a) tidy a bit
- 7) upload and test on AppHarbour
+- Can't deal with multiple tabs opened in one browser (disable on multiple tabs)
+- Still a bit unpredictable seems to show 2 instances of user on first login
+- upload and test on AppHarbour
 
    - ??? no threadsafety for refreshing list 
  7a) (disallow rudewords), also change responsiveness of chat window
  8) Ability to replay game
-  - Make cookie session work with new code 
-    - Need to set connectionID for context
- 
+
   9) Work on Mobile
   * Scale Canvas
   - Will be smooth (use of velocity)
   * Implement ability to do this (simple as possible, is it possible to use a library, think about possible future use)
 
-- Ability to output errors to user
-- Make cookie session work with new code 
-    - Need to set connectionID for context
+- Ability to output errors to user (not fully implemented )
+
 
 
 
