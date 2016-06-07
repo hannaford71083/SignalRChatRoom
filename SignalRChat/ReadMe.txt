@@ -6,8 +6,7 @@
 
 TODO:
 
-- Can't deal with multiple tabs opened in one browser (disable on multiple tabs)
-- Still a bit unpredictable seems to show 2 instances of user on first login
+- (DONE) Can't deal with multiple tabs opened in one browser (disable on multiple tabs)
 - upload and test on AppHarbour
 
    - ??? no threadsafety for refreshing list 
@@ -20,9 +19,7 @@ TODO:
   * Implement ability to do this (simple as possible, is it possible to use a library, think about possible future use)
 
 - Ability to output errors to user (not fully implemented )
-
-
-
+- Still a bit unpredictable seems to show 2 instances of user on first login (temp solution found)
 
 
 

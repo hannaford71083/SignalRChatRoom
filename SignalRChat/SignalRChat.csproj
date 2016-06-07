@@ -87,6 +87,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Css\Fonts\LCD_Solid.ttf" />
+    <Content Include="logged-off.html" />
     <Content Include="ReadMe.txt" />
     <Content Include="tracelog.txt" />
     <Content Include="packages.config" />

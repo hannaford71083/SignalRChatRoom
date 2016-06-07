@@ -74,6 +74,7 @@ namespace SignalRChat
                 //Would be if logged off and back on without signalR restart
                 user = ConnectedUsers.FirstOrDefault(o => o.PersistedId == persistedId);
                 user.ConnectionId = connectionId; //will have new ConnectionId as created be IConnectionFactory
+                Clients.AllExcept(user.ConnectionId).removeFromChatRoom(persistedId); //redirect if in differnt tab in same browser (this causes issues)
             }
             else {
                 //would be if logged off and on between a restart (and has cleared connected users)
@@ -156,13 +157,6 @@ namespace SignalRChat
                 this.pollProcess();
             }
 
-
-            //Debug.WriteLine("---------- Current ConnectedUsers ------------");
-            //foreach (UserDetail udItem in ConnectedUsers)
-            //{
-            //    Debug.WriteLine("UserName : {0} , ConnectionId : {1}", udItem.UserName , udItem.ConnectionId);
-            //}
-            //Debug.WriteLine("-----------------------------------------------");
 
             this.StartTimerLoop();
             this.StartRePollLoop();
@@ -475,8 +469,9 @@ namespace SignalRChat
         }
 
 
-        public void PollUserUpdate(string id, string pollId){
-            string[] args = { id, pollId };
+        public void PollUserUpdate(string connectionId, string pollId, string persistanceId )
+        {
+            string[] args = { connectionId, pollId, persistanceId };
             PollUserList.Add(args);
         }
 
@@ -493,6 +488,7 @@ namespace SignalRChat
                 //mark the ConnectedUsers as connected according to latest poll 
                 foreach(string[] args in PollUserList){
                     string connectionId = args[0];
+                    string persistedId = args[2];
                     int udPollId = 0;
                     int.TryParse(args[1], out udPollId);
                     if(udPollId == pollId){
@@ -514,6 +510,7 @@ namespace SignalRChat
                     {
                         UserDetail userToRemove = ud;
                         this.removeUserFromAllGroups(userToRemove);
+
                     }
                     else {
                         tempList.Add(ud);
