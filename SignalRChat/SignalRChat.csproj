@@ -86,16 +86,16 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Css\Fonts\LCD_Solid.eot" />
     <Content Include="Css\Fonts\LCD_Solid.svg" />
     <Content Include="Css\Fonts\LCD_Solid.ttf" />
+    <Content Include="Css\Fonts\LCD_Solid.woff" />
+    <Content Include="Css\Fonts\LCD_Solid.woff2" />
     <Content Include="logged-off.html" />
     <Content Include="ReadMe.txt" />
     <Content Include="tracelog.txt" />
     <Content Include="packages.config" />
     <Content Include="NLog.config" />
-    <Content Include="Css\Fonts\LCD_Solid.eot" />
-    <Content Include="Css\Fonts\LCD_Solid.woff" />
-    <Content Include="Css\Fonts\LCD_Solid.woff2" />
     <None Include="Scripts\jquery-1.8.2.intellisense.js" />
     <Content Include="Css\ChatStyle.css" />
     <Content Include="Css\JQueryUI\themes\base\images\ui-bg_flat_0_aaaaaa_40x100.png" />
