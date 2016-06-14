@@ -45,7 +45,7 @@ namespace SignalRChat
         }
 
         public static Logger logger = LogManager.GetCurrentClassLogger(); // for Console2Log
-
+        
 
         #endregion
 
@@ -68,6 +68,11 @@ namespace SignalRChat
         public void Connect(string persistedId, string connectionId, string userName)
         {
             UserDetail user;
+
+
+            Console.WriteLine("****************************** USER CONNECTED ******************************");
+            
+            //ChatHub.logger.Debug("------------------ Start ----------------");
 
             if (ConnectedUsers.Count(o => o.PersistedId == persistedId) > 0) //user in ConnectedUsers
             {
@@ -124,6 +129,7 @@ namespace SignalRChat
         //used for connection and reconnection
         public void Login(string userName, string connectionId)
         {
+
 
             if (userName.Length > 30 ) {
                 Clients.Caller.clientError("User name too long", "The name you submitted was " + userName.Length.ToString() + " , the limit is 30 charters. Please type another."  );
