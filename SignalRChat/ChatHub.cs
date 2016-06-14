@@ -77,6 +77,7 @@ namespace SignalRChat
         {
             UserDetail user;
 
+            new LogEvent("********************* message to myself *************************").Raise();
 
             //ChatHub.logger.Debug("------------------ Start ----------------");
 
