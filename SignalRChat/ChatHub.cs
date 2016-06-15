@@ -487,6 +487,7 @@ namespace SignalRChat
 
         public void PollUserUpdate(string connectionId, string pollId, string persistanceId )
         {
+            DebugOut("connectionId : " + connectionId + " , pollId : " + pollId + " , persistanceId : " + persistanceId);
             string[] args = { connectionId, pollId, persistanceId };
             PollUserList.Add(args);
         }
