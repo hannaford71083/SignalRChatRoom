@@ -34,10 +34,10 @@ namespace SignalRChat.Common
             {
                 if (!this.TryAdd(item))
                 {  
-                    //ChatHub.DebugOut("HubBlockingCollection - Add() -  Add Blocked");
+                    ChatHub.DebugOut("HubBlockingCollection - Add() -  Add Blocked");
                 }
                 else {
-                   // ChatHub.DebugOut("HubBlockingCollection - Add() -  Add: " + item.ToString());
+                   ChatHub.DebugOut("HubBlockingCollection - Add() -  Add: " + item.ToString());
                 }                
 
             }
@@ -55,10 +55,10 @@ namespace SignalRChat.Common
             {
                 if (!this.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
                 {
-                    //ChatHub.DebugOut("HubBlockingCollection - Remove() - Take Blocked");
+                    ChatHub.DebugOut("HubBlockingCollection - Remove() - Take Blocked");
                 }
                 else {
-                    //ChatHub.DebugOut("HubBlockingCollection - Remove() - Take : ", item.ToString());
+                    ChatHub.DebugOut("HubBlockingCollection - Remove() - Take : ", item.ToString());
                 }
             }
             catch (OperationCanceledException)
@@ -76,12 +76,12 @@ namespace SignalRChat.Common
             {
                 if (!this.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
                 {
-                    //ChatHub.DebugOut("HubBlockingCollection - RemoveAndCallback() -  Take Blocked");
+                    ChatHub.DebugOut("HubBlockingCollection - RemoveAndCallback() -  Take Blocked");
                     task.Wait(); //ensure task runs till finish
                 }
                 else
                 {
-                    //ChatHub.DebugOut("HubBlockingCollection - RemoveAndCallback() - Take: " + item.ToString());
+                    ChatHub.DebugOut("HubBlockingCollection - RemoveAndCallback() - Take: " + item.ToString());
                 }
             }
             catch (OperationCanceledException)
