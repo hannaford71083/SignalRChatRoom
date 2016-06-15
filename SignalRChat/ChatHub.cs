@@ -85,6 +85,12 @@ namespace SignalRChat
             //ChatHub.logger.Debug("------------------ Start ----------------");
 
             DebugOut("*** Start timing loops ***");
+            DebugOut("--- Users ---");
+            foreach (UserDetail ud in ConnectedUsers) {
+                DebugOut("PersistedId  : " + ud.PersistedId + " , ConnectionId : " + ud.ConnectionId);
+            }
+            DebugOut("-^- Users -^-");
+
             if (ConnectedUsers.Count(o => o.PersistedId == persistedId) > 0) //user in ConnectedUsers
             {
                 DebugOut("user already in memory PersistedId : " + persistedId);
