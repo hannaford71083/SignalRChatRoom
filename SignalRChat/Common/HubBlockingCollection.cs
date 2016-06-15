@@ -29,21 +29,21 @@ namespace SignalRChat.Common
 
         //Add method tends to work well
         public void Add(T item, int periodInMs = 1000) { //waiting time is 1 sec by default
-            //Debug.WriteLine("HubBlockingCollection<"+ item.GetType() +"> - Add() ");
+            //ChatHub.DebugOut("HubBlockingCollection<"+ item.GetType() +"> - Add() ");
             try
             {
                 if (!this.TryAdd(item))
                 {  
-                    //Debug.WriteLine("HubBlockingCollection - Add() -  Add Blocked");
+                    //ChatHub.DebugOut("HubBlockingCollection - Add() -  Add Blocked");
                 }
                 else {
-                   // Debug.WriteLine("HubBlockingCollection - Add() -  Add: " + item.ToString());
+                   // ChatHub.DebugOut("HubBlockingCollection - Add() -  Add: " + item.ToString());
                 }                
 
             }
             catch (OperationCanceledException e)
             {
-                Debug.WriteLine("HubBlockingCollection - Add() - Adding canceled message : " + e.Message);
+                ChatHub.DebugOut("HubBlockingCollection - Add() - Adding canceled message : " + e.Message);
             }
             
         }
@@ -55,15 +55,15 @@ namespace SignalRChat.Common
             {
                 if (!this.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
                 {
-                    //Debug.WriteLine("HubBlockingCollection - Remove() - Take Blocked");
+                    //ChatHub.DebugOut("HubBlockingCollection - Remove() - Take Blocked");
                 }
                 else {
-                    //Debug.WriteLine("HubBlockingCollection - Remove() - Take : ", item.ToString());
+                    //ChatHub.DebugOut("HubBlockingCollection - Remove() - Take : ", item.ToString());
                 }
             }
             catch (OperationCanceledException)
             {
-                Debug.WriteLine("HubBlockingCollection - Remove() -Taking canceled.");
+                ChatHub.DebugOut("HubBlockingCollection - Remove() -Taking canceled.");
                 //break;
             }
         }
@@ -76,17 +76,17 @@ namespace SignalRChat.Common
             {
                 if (!this.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
                 {
-                    //Debug.WriteLine("HubBlockingCollection - RemoveAndCallback() -  Take Blocked");
+                    //ChatHub.DebugOut("HubBlockingCollection - RemoveAndCallback() -  Take Blocked");
                     task.Wait(); //ensure task runs till finish
                 }
                 else
                 {
-                    //Debug.WriteLine("HubBlockingCollection - RemoveAndCallback() - Take: " + item.ToString());
+                    //ChatHub.DebugOut("HubBlockingCollection - RemoveAndCallback() - Take: " + item.ToString());
                 }
             }
             catch (OperationCanceledException)
             {
-                Debug.WriteLine("HubBlockingCollection - RemoveAndCallback() - Taking canceled.");
+                ChatHub.DebugOut("HubBlockingCollection - RemoveAndCallback() - Taking canceled.");
             }
         }
 
@@ -107,7 +107,7 @@ namespace SignalRChat.Common
                 //this.Dispose(); //TODO: do we need to dispose of list, will probs be garbage collected
             }
             catch(Exception e){
-                Debug.WriteLine("HubBlockingCollection -  Failed to Clear(), message : "+ e.Message); //TODO: Handle error properly
+                ChatHub.DebugOut("HubBlockingCollection -  Failed to Clear(), message : "+ e.Message); //TODO: Handle error properly
             }
         }
 

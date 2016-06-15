@@ -83,7 +83,7 @@ namespace SignalRChat.Common
                 {
                     //GameGroup gg = GameGroups[playerState.GroupId];
 
-                    //Debug.WriteLine("GameGroups id : " + gg.id);
+                    //ChatHub.DebugOut("GameGroups id : " + gg.id);
 
                     //Clients.Group(playerState.GroupId).UpdateGame(gg); //sends group back to players in group
                     hub.Clients.Group(playerState.GroupId).UpdateGame(this);

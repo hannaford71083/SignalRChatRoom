@@ -45,6 +45,7 @@ namespace SignalRChat
             get{    lock (cpLock){  return _currentPollingID;   }   }
         }
 
+        private static bool disableDebuggingComments = false;
         public static Logger logger = LogManager.GetCurrentClassLogger(); // for Console2Log
         
 
@@ -77,7 +78,7 @@ namespace SignalRChat
         {
             UserDetail user;
 
-            Trace.TraceInformation("__________-----^^^^^^^-----^^^^^^-----__________");
+            DebugOut("__________-----^^^^^^^-----^^^^^^-----__________");
 
             //new LogEvent("********************* message to myself *************************").Raise();
 
@@ -150,7 +151,7 @@ namespace SignalRChat
             rightNow = DateTime.Now;
             //Init Trace for logging
             Debug.Listeners.Add(new TextWriterTraceListener(Console.Out));
-            Debug.WriteLine("ChatHub - Connect() at {0}", rightNow);
+            DebugOut("ChatHub - Connect() at "+ rightNow);
             //var id = Context.ConnectionId;
             var id = connectionId;
 
@@ -229,7 +230,7 @@ namespace SignalRChat
             
             if(failedAdd){
                 //Clients.Group(groupID).clientError("Couldn't Add Player", "Failed to Add a player(s) to the game"); //failed to add player to group or group list
-                Debug.WriteLine("failed to add player to group or group list");
+                DebugOut("failed to add player to group or group list");
             }
             else{
                 Clients.Group(groupID).showGameScreen();
@@ -251,7 +252,7 @@ namespace SignalRChat
             GameGroups[playerState.GroupId].PlayerStates[playerState.Id] = playerState;
 
             // check group has finished
-            Debug.WriteLine("------- Loop -------");
+            DebugOut("------- Loop -------");
             bool areAllFinished = true;
             foreach (PlayerState ps in GameGroups[playerState.GroupId].PlayerStates.Values)
             {
@@ -259,7 +260,7 @@ namespace SignalRChat
                 {
                     areAllFinished = false;
                 }
-                Debug.WriteLine("finsihTime : " + ps.FinishTimeMS);
+                DebugOut("finsihTime : " + ps.FinishTimeMS);
             }
 
             if (areAllFinished)
@@ -272,14 +273,14 @@ namespace SignalRChat
 
         public override System.Threading.Tasks.Task OnDisconnected(bool stopCalled)
         {
-            Debug.WriteLine("Task OnDisconnected - Context.ConnectionID : " + Context.ConnectionId);
+            DebugOut("Task OnDisconnected - Context.ConnectionID : " + Context.ConnectionId);
             this.pollProcess();
             return base.OnDisconnected(stopCalled);
         }
 
         public override System.Threading.Tasks.Task OnReconnected()
         {
-            Debug.WriteLine("Task OnReconnected - Context.ConnectionID : "+ Context.ConnectionId );
+            DebugOut("Task OnReconnected - Context.ConnectionID : "+ Context.ConnectionId );
             return base.OnReconnected();
         }
 
@@ -347,7 +348,7 @@ namespace SignalRChat
 
         public void AddGroup(string userId)
         {
-            Debug.WriteLine("ChatHub - AddGroup() - attempt add user ID: " + userId);
+            DebugOut("ChatHub - AddGroup() - attempt add user ID: " + userId);
             Guid groupId = Guid.NewGuid();
             Group newGroup = new Group();
 
@@ -363,7 +364,7 @@ namespace SignalRChat
             }
             catch (Exception e)
             {
-                Debug.WriteLine("ChatHub - AddGroup() error : " + e.Message);
+                DebugOut("ChatHub - AddGroup() error : " + e.Message);
             }
             this.UpdateClientGroups();
         }
@@ -385,7 +386,7 @@ namespace SignalRChat
             }
             else
             {
-                Debug.WriteLine("ChatHub - AddUserToGroup() - user ID: " + userId + ", admin ID: " + adminID);
+                DebugOut("ChatHub - AddUserToGroup() - user ID: " + userId + ", admin ID: " + adminID);
                 //loop through all groups 
                 GroupList.FirstOrDefault(o => o.getAdminId() == adminID).addUserDetail(
                     //add user detail that = userID
@@ -405,7 +406,7 @@ namespace SignalRChat
             }
             catch (Exception e)
             {
-                Debug.WriteLine("UploadData() error, message: " + e.Message);
+                DebugOut("UploadData() error, message: " + e.Message);
             }
         }
 
@@ -430,14 +431,14 @@ namespace SignalRChat
             //initialise only one timer loop, like a Singleton pattern :¬D
             if (CountdownTimerLoop == null)
             {
-                Debug.WriteLine("CREATING TIMER");
+                DebugOut("CREATING TIMER");
                 CountdownTimerLoop = new System.Timers.Timer(1000);
                 CountdownTimerLoop.Elapsed += (sender, e) => CountDownLoopExecute(sender, e, this);
                 CountdownTimerLoop.Enabled = true; // Enable it
             }
             else
             {
-                Debug.WriteLine("TIMER ALREADY EXISTS");
+                DebugOut("TIMER ALREADY EXISTS");
             }
         }
 
@@ -447,14 +448,14 @@ namespace SignalRChat
             //initialise only one timer loop
             if (RePollLoop == null)
             {
-                Debug.WriteLine("CREATING TIMER");
+                DebugOut("CREATING TIMER");
                 RePollLoop = new System.Timers.Timer(40000);  //40secs
                 RePollLoop.Elapsed += (sender, e) => RePollLoopExecute(sender, e, this);
                 RePollLoop.Enabled = true; // Enable it
             }
             else
             {
-                Debug.WriteLine("TIMER ALREADY EXISTS");  
+                DebugOut("TIMER ALREADY EXISTS");  
             }
         }
         
@@ -463,7 +464,7 @@ namespace SignalRChat
         {
 
             if (CountDownQueue.Count > 0) {
-                Debug.WriteLine("Countdown Execute - length is " + CountDownQueue.Count);
+                DebugOut("Countdown Execute - length is " + CountDownQueue.Count);
             }
 
             foreach (GameGroup gameGroup in CountDownQueue) { 
@@ -512,7 +513,7 @@ namespace SignalRChat
                             ConnectedUsers.First(o => o.ConnectionId == connectionId).UserPresentInPoll = true;
                         }
                         catch (Exception e) { 
-                            Debug.WriteLine("Error finding item, Error : "+ e.Message);
+                            DebugOut("Error finding item, Error : "+ e.Message);
                         }
                     }
                 }
@@ -554,7 +555,7 @@ namespace SignalRChat
                         GameGroups[group.id].PlayerStates[userId].FinishTimeMS = 100000; //if user leaves sets time to 100 secs
                     }
                     catch (Exception e) {
-                        Debug.WriteLine("Key Not Found Exeception : "+ e.Message);
+                        DebugOut("Key Not Found Exeception : "+ e.Message);
                     }
                 }
             }
@@ -563,21 +564,26 @@ namespace SignalRChat
 
 
         private void pollProcess() {
+            DebugOut("------- pollProcess() ------- ");
             CurrentPollingID += 1; //CurrentPollingID used to use .... Interlocked.Add(ref CurrentPollingID, 1);
 
             int instancePollId = CurrentPollingID;
             Thread.Sleep(1000);
             Clients.All.pollUserCheck(CurrentPollingID);
+            DebugOut("pollUserCheck(" + CurrentPollingID + ") ");
+
 
             Thread.Sleep(2000);
             if (CurrentPollingID == instancePollId)
             {
                 this.updatePollResultClients(instancePollId);
+                DebugOut("CurrentPollingID == instancePollId -> " + CurrentPollingID );
             }
 
             Thread.Sleep(1000);
             if (CurrentPollingID == instancePollId)
             {
+                DebugOut("LAST ACTION : CurrentPollingID == instancePollId -> " + CurrentPollingID);
                 CurrentPollingID = 0;
                 PollUserList.Clear();
                 //is it the 'end of the session', if so then flush objects
@@ -645,7 +651,7 @@ namespace SignalRChat
                     }
                     catch (Exception e)
                     {
-                        Debug.WriteLine("ChatHub - NonBlockingConsumer - error message : " + e.Message);
+                        DebugOut("ChatHub - NonBlockingConsumer - error message : " + e.Message);
                     }
                 }
                 else
@@ -664,13 +670,13 @@ namespace SignalRChat
                 Clients.Client(user.ConnectionId).UploadListInfo(user.ConnectionId, GroupList.FirstOrDefault(o => o.getAdminId() == adminforGroupId).id); // send group info to client
             }
 
-            Debug.WriteLine("----- ----- Game Groups Assignment ----- ----- ");
+            DebugOut("----- ----- Game Groups Assignment ----- ----- ");
             foreach (Group group in GroupList)
             {
                 this.addGameGroupAndUsers(group.id);
             }
             var a = GameGroups;
-            Debug.WriteLine("----- ----- ----- ----- ----- ----- ");
+            DebugOut("----- ----- ----- ----- ----- ----- ");
         }
 
 
@@ -690,16 +696,48 @@ namespace SignalRChat
             if (failedAdd)
             {
                 //TODO: Add ClientError() callback
-                Debug.WriteLine("Failed to Add Player to Group or Group to List");
+                DebugOut("Failed to Add Player to Group or Group to List");
             }
             else
             {
-                Debug.WriteLine("Added Following Group " + newGameGroup.id + " !!!!!! ");
+                DebugOut("Added Following Group " + newGameGroup.id + " !!!!!! ");
             }
         }
 
 
         #endregion
+
+
+        //Default logging info
+        public static void DebugOut(string info)
+        {
+            if (disableDebuggingComments) { return; }
+            Trace.TraceInformation(info);
+        }
+
+        //overriden method will channel debugging dependent on type specified
+        public static void DebugOut(string info, string type)
+        {
+            if (disableDebuggingComments) { return; }
+            if (type == "debug")
+            {
+                ChatHub.DebugOut(info);
+            }
+            else if (type == "appHb") {
+                Trace.TraceInformation(info); //app Harbour trace
+            }
+            else if (type == "log2console")
+            {
+                ChatHub.DebugOut(info);
+            }
+            else
+            {
+                ChatHub.DebugOut(info); //default override
+            }
+        }
+
+
+
 
 
 
@@ -753,15 +791,15 @@ namespace SignalRChat
 //    {
 //        if (!bc.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
 //        {
-//            Debug.WriteLine("ChatHub - NonBlockingConsumer - Take Blocked");
+//            DebugOut("ChatHub - NonBlockingConsumer - Take Blocked");
 //        }
 //        else {
-//            Debug.WriteLine("ChatHub - NonBlockingConsumer - Take:  " + item.ToString());
+//            DebugOut("ChatHub - NonBlockingConsumer - Take:  " + item.ToString());
 //        }
 
 //    }
 //    catch (OperationCanceledException) {
-//        Debug.WriteLine("ChatHub - NonBlockingConsumer -Taking canceled.");
+//        DebugOut("ChatHub - NonBlockingConsumer -Taking canceled.");
 //        //break;
 //    }
 //}

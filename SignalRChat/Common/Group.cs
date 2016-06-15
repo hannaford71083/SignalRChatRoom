@@ -43,7 +43,7 @@ namespace SignalRChat.Common
                 {
                     if (user.ConnectionId != id) { 
                         newUsers.Add(user);
-                        //Debug.WriteLine("User Added id : " + user.ConnectionId);
+                        //ChatHub.DebugOut("User Added id : " + user.ConnectionId);
                     }
                     else { modified = true; }
                 }
