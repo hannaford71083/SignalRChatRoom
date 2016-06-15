@@ -84,14 +84,17 @@ namespace SignalRChat
 
             //ChatHub.logger.Debug("------------------ Start ----------------");
 
+            DebugOut("*** Start timing loops ***");
             if (ConnectedUsers.Count(o => o.PersistedId == persistedId) > 0) //user in ConnectedUsers
             {
+                DebugOut("user already in memory PersistedId : " + persistedId);
                 //Would be if logged off and back on without signalR restart
                 user = ConnectedUsers.FirstOrDefault(o => o.PersistedId == persistedId);
                 user.ConnectionId = connectionId; //will have new ConnectionId as created be IConnectionFactory
                 Clients.AllExcept(user.ConnectionId).removeFromChatRoom(persistedId); //redirect if in differnt tab in same browser (this causes issues)
             }
             else {
+                DebugOut("create user PersistedId : " + persistedId);
                 //would be if logged off and on between a restart (and has cleared connected users)
                  user = this.createUserProfile(connectionId, userName, persistedId);
             }
@@ -103,6 +106,7 @@ namespace SignalRChat
                 ConnectedUsers,
                 CurrentMessage
                 ); // send to caller
+
 
             Clients.AllExcept(user.ConnectionId).updateUsersList(ConnectedUsers);
             this.pollProcess();
@@ -172,7 +176,6 @@ namespace SignalRChat
                 Clients.AllExcept(id).updateUsersList(ConnectedUsers);
                 this.pollProcess();
             }
-
 
             this.StartTimerLoop();
             this.StartRePollLoop();
@@ -445,6 +448,8 @@ namespace SignalRChat
 
         private void StartRePollLoop()
         {
+            DebugOut("StartRePollLoop()");
+
             //initialise only one timer loop
             if (RePollLoop == null)
             {
