@@ -586,14 +586,14 @@ namespace SignalRChat
             DebugOut("Poll 1) pollUserCheck(" + CurrentPollingID + ") ");
 
 
-            Thread.Sleep(5000);
+            Thread.Sleep(10000);
             if (CurrentPollingID == instancePollId)
             {
                 this.updatePollResultClients(instancePollId);
                 DebugOut("Poll 2) CurrentPollingID == instancePollId -> " + CurrentPollingID);
             }
 
-            Thread.Sleep(5000);
+            Thread.Sleep(3000);
             if (CurrentPollingID == instancePollId)
             {
                 DebugOut("Poll 3) : CurrentPollingID == instancePollId -> " + CurrentPollingID);
