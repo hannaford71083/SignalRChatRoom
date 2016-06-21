@@ -355,12 +355,14 @@
 
         //user replies to poll to register presence
         chatHub.client.pollUserCheck = function (pollId) {
+          console.log("POLL 1) pollUserCheck ", pollId );
           chatHub.server.pollUserUpdate(user.id, pollId, user.persistedId);
         }
 
 
         //Updates users online list - replaced onNewUserConnected and onUserDisconnected
         chatHub.client.updateUsersList = function (connectedUsers) {
+          console.log("connectedUsers ", connectedUsers);
           updateUsersList(connectedUsers);
         }
 

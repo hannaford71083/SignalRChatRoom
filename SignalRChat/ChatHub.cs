@@ -498,7 +498,7 @@ namespace SignalRChat
 
         public void PollUserUpdate(string connectionId, string pollId, string persistanceId )
         {
-            DebugOut("connectionId : " + connectionId + " , pollId : " + pollId + " , persistanceId : " + persistanceId);
+            DebugOut("Poll 1a) connectionId : " + connectionId + " , pollId : " + pollId + " , persistanceId : " + persistanceId);
             string[] args = { connectionId, pollId, persistanceId };
             PollUserList.Add(args);
         }
@@ -514,9 +514,13 @@ namespace SignalRChat
                 }
 
                 //mark the ConnectedUsers as connected according to latest poll 
+                DebugOut("User Poll returned requests updatePollResultClients with pollid: "+ pollId);
                 foreach(string[] args in PollUserList){
                     string connectionId = args[0];
                     string persistedId = args[2];
+
+                    DebugOut("      connectionId : " + connectionId + " , persistedId : " + persistedId);
+                    
                     int udPollId = 0;
                     int.TryParse(args[1], out udPollId);
                     if(udPollId == pollId){
@@ -582,25 +586,26 @@ namespace SignalRChat
             int instancePollId = CurrentPollingID;
             Thread.Sleep(1000);
             Clients.All.pollUserCheck(CurrentPollingID);
-            DebugOut("pollUserCheck(" + CurrentPollingID + ") ");
+            DebugOut("Poll 1) pollUserCheck(" + CurrentPollingID + ") ");
 
 
             Thread.Sleep(2000);
             if (CurrentPollingID == instancePollId)
             {
                 this.updatePollResultClients(instancePollId);
-                DebugOut("CurrentPollingID == instancePollId -> " + CurrentPollingID );
+                DebugOut("Poll 2) CurrentPollingID == instancePollId -> " + CurrentPollingID);
             }
 
             Thread.Sleep(1000);
             if (CurrentPollingID == instancePollId)
             {
-                DebugOut("LAST ACTION : CurrentPollingID == instancePollId -> " + CurrentPollingID);
+                DebugOut("Poll 3) : CurrentPollingID == instancePollId -> " + CurrentPollingID);
                 CurrentPollingID = 0;
                 PollUserList.Clear();
                 //is it the 'end of the session', if so then flush objects
                 if (ConnectedUsers.Count == 0)
                 {
+                    DebugOut("Garbage collect");
                     this.GarbagCollect();
                 }
             }
