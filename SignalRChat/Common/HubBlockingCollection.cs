@@ -33,8 +33,8 @@ namespace SignalRChat.Common
             try
             {
                 if (!this.TryAdd(item))
-                {  
-                    ChatHub.DebugOut("HubBlockingCollection - Add() -  Add Blocked");
+                {
+                    ChatHub.DebugOut("HubBlockingCollection - Add() -  Add BLOCKED " + item.ToString());
                 }
                 else {
                    ChatHub.DebugOut("HubBlockingCollection - Add() -  Add: " + item.ToString());
@@ -55,10 +55,10 @@ namespace SignalRChat.Common
             {
                 if (!this.TryTake(out item, 1000, ct)) //TODO: What is a reasonible time to be waiting? Should time in MS be passed in as argument
                 {
-                    ChatHub.DebugOut("HubBlockingCollection - Remove() - Take Blocked");
+                    ChatHub.DebugOut("HubBlockingCollection - Remove() - Take Blocked " + item.ToString());
                 }
                 else {
-                    ChatHub.DebugOut("HubBlockingCollection - Remove() - Take : ", item.ToString());
+                    ChatHub.DebugOut("HubBlockingCollection - Remove() - Take : "+ item.ToString());
                 }
             }
             catch (OperationCanceledException)

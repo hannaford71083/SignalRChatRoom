@@ -99,6 +99,7 @@ namespace SignalRChat
                 DebugOut("create user PersistedId : " + persistedId);
                 //would be if logged off and on between a restart (and has cleared connected users)
                  user = this.createUserProfile(connectionId, userName, persistedId);
+                 ConnectedUsers.Add(user);
             }
 
             Clients.Caller.onLoggedIn(
@@ -729,7 +730,7 @@ namespace SignalRChat
             DebugOut("--- Users ---");
             foreach (UserDetail ud in ConnectedUsers)
             {
-                DebugOut("PersistedId  : " + ud.PersistedId + " , ConnectionId : " + ud.ConnectionId);
+                DebugOut("UserName : " + ud.UserName + " , PersistedId  : " + ud.PersistedId + " , ConnectionId : " + ud.ConnectionId);
             }
             DebugOut("-^- Users -^-");
         }
