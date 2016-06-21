@@ -99,7 +99,6 @@ namespace SignalRChat
                 DebugOut("create user PersistedId : " + persistedId);
                 //would be if logged off and on between a restart (and has cleared connected users)
                  user = this.createUserProfile(connectionId, userName, persistedId);
-                 ConnectedUsers.Add(user);
                  this.logCurrentUsers();
             }
 
