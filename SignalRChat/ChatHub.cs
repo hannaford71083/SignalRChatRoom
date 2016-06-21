@@ -85,11 +85,7 @@ namespace SignalRChat
             //ChatHub.logger.Debug("------------------ Start ----------------");
 
             DebugOut("*** Start timing loops ***");
-            DebugOut("--- Users ---");
-            foreach (UserDetail ud in ConnectedUsers) {
-                DebugOut("PersistedId  : " + ud.PersistedId + " , ConnectionId : " + ud.ConnectionId);
-            }
-            DebugOut("-^- Users -^-");
+            this.logCurrentUsers();
 
             if (ConnectedUsers.Count(o => o.PersistedId == persistedId) > 0) //user in ConnectedUsers
             {
@@ -119,7 +115,6 @@ namespace SignalRChat
             this.StartTimerLoop();
             this.StartRePollLoop();
         }
-
 
 
         private UserDetail createUserProfile(string id, string htmlEncodedUserName)
@@ -506,6 +501,7 @@ namespace SignalRChat
 
         private void updatePollResultClients(int pollId)
         {
+            DebugOut("Poll 2b) ATTMEPT");
             lock (this._lock) {
                 
                 foreach (UserDetail ud in ConnectedUsers) //set all to false
@@ -514,7 +510,7 @@ namespace SignalRChat
                 }
 
                 //mark the ConnectedUsers as connected according to latest poll 
-                DebugOut("User Poll returned requests updatePollResultClients with pollid: "+ pollId);
+                DebugOut("Poll 2b) updatePollResultClients( " + pollId);
                 foreach(string[] args in PollUserList){
                     string connectionId = args[0];
                     string persistedId = args[2];
@@ -602,6 +598,9 @@ namespace SignalRChat
                 DebugOut("Poll 3) : CurrentPollingID == instancePollId -> " + CurrentPollingID);
                 CurrentPollingID = 0;
                 PollUserList.Clear();
+
+                this.logCurrentUsers();
+
                 //is it the 'end of the session', if so then flush objects
                 if (ConnectedUsers.Count == 0)
                 {
@@ -723,6 +722,17 @@ namespace SignalRChat
 
 
         #endregion
+
+
+        private void logCurrentUsers()
+        {
+            DebugOut("--- Users ---");
+            foreach (UserDetail ud in ConnectedUsers)
+            {
+                DebugOut("PersistedId  : " + ud.PersistedId + " , ConnectionId : " + ud.ConnectionId);
+            }
+            DebugOut("-^- Users -^-");
+        }
 
 
         //Default logging info
