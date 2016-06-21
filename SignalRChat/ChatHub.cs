@@ -487,7 +487,7 @@ namespace SignalRChat
 
         private static void RePollLoopExecute(object sender, ElapsedEventArgs e, ChatHub ch)
         {
-            ch.pollProcess();
+            //ch.pollProcess();
         }
 
 
