@@ -495,6 +495,7 @@ namespace SignalRChat
         public void PollUserUpdate(string connectionId, string pollId, string persistanceId )
         {
             DebugOut("Poll 1a) connectionId : " + connectionId + " , pollId : " + pollId + " , persistanceId : " + persistanceId);
+            DebugOut("  ThreadId: " + Thread.CurrentThread.ManagedThreadId.ToString());
             string[] args = { connectionId, pollId, persistanceId };
             PollUserList.Add(args);
         }
@@ -578,6 +579,8 @@ namespace SignalRChat
 
         private void pollProcess() {
             DebugOut("------- pollProcess() ------- ");
+            DebugOut("  ThreadId: "+ Thread.CurrentThread.ManagedThreadId.ToString() );
+
             CurrentPollingID += 1; //CurrentPollingID used to use .... Interlocked.Add(ref CurrentPollingID, 1);
 
             int instancePollId = CurrentPollingID;
