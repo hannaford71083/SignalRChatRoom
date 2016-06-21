@@ -456,7 +456,7 @@ namespace SignalRChat
             if (RePollLoop == null)
             {
                 DebugOut("CREATING TIMER");
-                RePollLoop = new System.Timers.Timer(40000);  //40secs
+                RePollLoop = new System.Timers.Timer(45000);  //45secs
                 RePollLoop.Elapsed += (sender, e) => RePollLoopExecute(sender, e, this);
                 RePollLoop.Enabled = true; // Enable it
             }
@@ -581,19 +581,19 @@ namespace SignalRChat
             CurrentPollingID += 1; //CurrentPollingID used to use .... Interlocked.Add(ref CurrentPollingID, 1);
 
             int instancePollId = CurrentPollingID;
-            Thread.Sleep(1000);
+            //Thread.Sleep(1000);
             Clients.All.pollUserCheck(CurrentPollingID);
             DebugOut("Poll 1) pollUserCheck(" + CurrentPollingID + ") ");
 
 
-            Thread.Sleep(2000);
+            Thread.Sleep(5000);
             if (CurrentPollingID == instancePollId)
             {
                 this.updatePollResultClients(instancePollId);
                 DebugOut("Poll 2) CurrentPollingID == instancePollId -> " + CurrentPollingID);
             }
 
-            Thread.Sleep(1000);
+            Thread.Sleep(5000);
             if (CurrentPollingID == instancePollId)
             {
                 DebugOut("Poll 3) : CurrentPollingID == instancePollId -> " + CurrentPollingID);
