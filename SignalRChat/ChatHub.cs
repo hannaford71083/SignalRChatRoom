@@ -12,9 +12,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using Newtonsoft.Json;
-//using System.Threading;
 using NLog;
 using System.Web.Management;
+
 
 namespace SignalRChat
 {
@@ -33,7 +33,7 @@ namespace SignalRChat
         static ConcurrentQueue<GameGroup>           CountDownQueue      = new ConcurrentQueue<GameGroup>();
         static System.Timers.Timer                  CountdownTimerLoop  = null; //Static timer acts as Clock cycle for instances of Group countdown
         static System.Timers.Timer RePollLoop = null; //Every 40 secs Repolls clients for updated ConnectedUsers
-
+        
         //Polling Data members
         public static HubBlockingCollection<string[]> PollUserList = new HubBlockingCollection<string[]>();
         private object _lock = new object();
@@ -81,7 +81,6 @@ namespace SignalRChat
             DebugOut("__________-----^^^^^^^-----^^^^^^-----__________");
 
             //new LogEvent("********************* message to myself *************************").Raise();
-
             //ChatHub.logger.Debug("------------------ Start ----------------");
 
             DebugOut("*** Start timing loops ***");
@@ -184,7 +183,7 @@ namespace SignalRChat
         }
 
 
-        public void SignalStartGame( string groupID)
+        public void SignalStartGame( string groupID )
         {
             //limit ammount of games taking place simultaneously
             int maxConnectionsAllowed = 100;  //max connections as obtained from testing on same machine
@@ -241,7 +240,7 @@ namespace SignalRChat
                 Clients.Group(groupID).showGameScreen();
                 this.StartCountDown(GameGroups[groupID]);
             }
-            
+
         }
 
         private void StartCountDown(GameGroup gg) {
@@ -456,8 +455,8 @@ namespace SignalRChat
             if (RePollLoop == null)
             {
                 DebugOut("CREATING TIMER");
-                RePollLoop = new System.Timers.Timer(45000);  //45secs
-                RePollLoop.Elapsed += (sender, e) => RePollLoopExecute(sender, e, this);
+                RePollLoop          = new System.Timers.Timer(45000);  //45secs
+                RePollLoop.Elapsed += new ElapsedEventHandler((sender, e) => RePollLoopExecute(sender, e, this));
                 RePollLoop.Enabled = true; // Enable it
             }
             else
