@@ -111,6 +111,9 @@ namespace SignalRChat
 
 
             Clients.AllExcept(user.ConnectionId).updateUsersList(ConnectedUsers);
+            //Thread thread = new Thread(this.pollProcess);
+            //thread.IsBackground = true;
+            //thread.Start();
             this.pollProcess();
             this.StartTimerLoop();
             this.StartRePollLoop();
@@ -444,6 +447,12 @@ namespace SignalRChat
             {
                 DebugOut("TIMER ALREADY EXISTS");
             }
+
+            //Experimental Thread 1
+            //Thread experimentThread = new 
+
+
+
         }
 
 
@@ -577,40 +586,43 @@ namespace SignalRChat
 
 
         private void pollProcess() {
-            DebugOut("------- pollProcess() ------- ");
-            DebugOut("  ThreadId: "+ Thread.CurrentThread.ManagedThreadId.ToString() );
-
-            CurrentPollingID += 1; //CurrentPollingID used to use .... Interlocked.Add(ref CurrentPollingID, 1);
-
-            int instancePollId = CurrentPollingID;
-            //Thread.Sleep(1000);
-            Clients.All.pollUserCheck(CurrentPollingID);
-            DebugOut("Poll 1) pollUserCheck(" + CurrentPollingID + ") ");
-
-
-            Thread.Sleep(10000);
-            if (CurrentPollingID == instancePollId)
+            Task.Run(() =>
             {
-                this.updatePollResultClients(instancePollId);
-                DebugOut("Poll 2) CurrentPollingID == instancePollId -> " + CurrentPollingID);
-            }
+                DebugOut("------- pollProcess() ------- ");
+                DebugOut("  ThreadId: "+ Thread.CurrentThread.ManagedThreadId.ToString() );
 
-            Thread.Sleep(3000);
-            if (CurrentPollingID == instancePollId)
-            {
-                DebugOut("Poll 3) : CurrentPollingID == instancePollId -> " + CurrentPollingID);
-                CurrentPollingID = 0;
-                PollUserList.Clear();
+                CurrentPollingID += 1; //CurrentPollingID used to use .... Interlocked.Add(ref CurrentPollingID, 1);
 
-                this.logCurrentUsers();
+                int instancePollId = CurrentPollingID;
+                //Thread.Sleep(1000);
+                this.Clients.All.pollUserCheck(CurrentPollingID);
+                DebugOut("Poll 1) pollUserCheck(" + CurrentPollingID + ") ");
 
-                //is it the 'end of the session', if so then flush objects
-                if (ConnectedUsers.Count == 0)
+
+                Thread.Sleep(10000);
+                if (CurrentPollingID == instancePollId)
                 {
-                    DebugOut("Garbage collect");
-                    this.GarbagCollect();
+                    this.updatePollResultClients(instancePollId);
+                    DebugOut("Poll 2) CurrentPollingID == instancePollId -> " + CurrentPollingID);
                 }
-            }
+
+                Thread.Sleep(3000);
+                if (CurrentPollingID == instancePollId)
+                {
+                    DebugOut("Poll 3) : CurrentPollingID == instancePollId -> " + CurrentPollingID);
+                    CurrentPollingID = 0;
+                    PollUserList.Clear();
+
+                    this.logCurrentUsers();
+
+                    //is it the 'end of the session', if so then flush objects
+                    if (ConnectedUsers.Count == 0)
+                    {
+                        DebugOut("Garbage collect");
+                        this.GarbagCollect();
+                    }
+                }
+            });
         
         }
 
